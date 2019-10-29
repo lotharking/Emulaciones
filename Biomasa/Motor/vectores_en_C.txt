@@ -1,0 +1,46 @@
+//arreglo
+
+/*
+    Redondear números en C con round
+    @author parzibyte
+    parzibyte.me/blog
+*/
+#include<stdio.h>
+#include<math.h>
+#include <stdlib.h>
+
+int main(){
+int **arreglo=NULL;
+int k, i, j;
+int siMemoria=1;
+
+arreglo = (int**) calloc(2,sizeof(int*));
+if (arreglo==NULL){
+  //mensaje de error
+}else{
+  for(int i=0;i<2;i++){
+    arreglo[i]=(int*) calloc(4,sizeof(int*));
+    if (arreglo[i]==NULL){
+      //mensaje de error
+      siMemoria=0;
+    }
+  }
+}
+if(siMemoria==1){
+for(i=0;i<2;i++){
+  for(j=0;j<4;j++){
+    printf("Elemento [ %d, %d]: ",i+1,j+1);
+    scanf("%d", &arreglo[i][j]);
+  }
+}
+}
+
+for(i=0;i<2;i++){
+  for(j=0;j<4;j++){
+    printf("%2d",arreglo[i][j]);
+  }
+  printf("\n");
+}
+}
+
+//FIN DEL MANEJO DE ARREGLOS
