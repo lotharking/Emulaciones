@@ -13,10 +13,12 @@ double retro = 0;
 int contVect = 0;
 
 //arreglos
-double Prom[650];
+double PteR[650];
+double PtcR[650];
 double u[45][185];
 //Acondicionaamiento Torque
 double teR = 0;
+double tcR = 0;
 
 //Variables globales
 double h =1000; //coeficiente global de transferencia de calor (W/m^2*K)
@@ -61,6 +63,7 @@ double Cc = 0;
 double Fi_c = 0;
 double Alfa = 0;
 double Vel = 0;
+double PruebaVel = 0;
 double ini = 2; //Valor inicial
 //Variables termicas y termodinamicos
 double Mg = 0.0002;
@@ -101,6 +104,10 @@ double Int6In1 = 1;
 double Int6Out1 = 1;
 double Int7In1 = 1;
 double Int7Out1 = 1;
+double IntGdIn = 1;
+double IntGdOut = 1;
+double IntGqIn = 1;
+double IntGqOut = 1;
 
 //Temperatura
 double N = 45;//45
@@ -115,54 +122,62 @@ double t = 20;
 double jmax = 0;
 double TW1,TW2,TW3,TW4;
 
+//Parametros motor DC
+double Ri=0.973;
+double Ji=1.72;
+double Kp=5.6627;
+double Kb=6.2;
+double Bi=0.1;
+double Vout;
+double Iout=1;
+double Rout=25;
+
+//Conversor
+double DcDuty=1;
+double DD1=1, DD2=1, VV1=1,VV2=1;
+double DcVo=1;
+
 //Txt
 FILE* fichero;
 char text1[20],text2[20],text3[20],text4[20],text5[20],text6[20],text7[20],text8[20];
 
-double integral1(double IntIn1, double IntOut1)
-{
+double integral1(double IntIn1, double IntOut1){
 	double intg=1;
 	intg=(0.0001*IntIn1)+(IntOut1);
 	return intg;
 }
 
-double integral2(double Int2In1, double Int2Out1)
-{
+double integral2(double Int2In1, double Int2Out1){
 	double intg=1;
 	intg=(0.0001*Int2In1)+(Int2Out1);
 	return intg;
 }
 
-double integral3(double Int3In1, double Int3Out1)
-{
+double integral3(double Int3In1, double Int3Out1){
 	double intg=1;
 	intg=(0.0001*Int3In1)+(Int3Out1);
 	return intg;
 }
 
-double integral4(double Int4In1, double Int4Out1)
-{
+double integral4(double Int4In1, double Int4Out1){
 	double intg=1;
 	intg=(0.0001*Int4In1)+(Int4Out1);
 	return intg;
 }
 
-double integral5(double Int5In1, double Int5Out1)
-{
+double integral5(double Int5In1, double Int5Out1){
 	double intg=1;
 	intg=(0.0001*Int5In1)+(Int5Out1);
 	return intg;
 }
 
-double integral6(double Int6In1, double Int6Out1)
-{
+double integral6(double Int6In1, double Int6Out1){
 	double intg=1;
 	intg=(0.0001*Int6In1)+(Int6Out1);
 	return intg;
 }
 
-double integral7(double Int7In1, double Int7Out1)
-{
+double integral7(double Int7In1, double Int7Out1){
 	double intg=1;
 	intg=(0.0001*Int7In1)+(Int7Out1);
 	return intg;
@@ -200,7 +215,7 @@ for(int i=0;i<1;i++){
   }
 }
 
-////hace el u(N,:)--> aqui el error
+////hace el u(N,:)
 for(int j=0;j<jmax;j++){
 	u[44][j]=TL;
 	//printf("aqui: %f\n",u[44][j]);
@@ -268,6 +283,20 @@ double tempGas(double Tgn, double Vg,double retro){
   return Tg1;
 }
 
+double Generador(double Ri,double Kb,double Iout,double vel){
+	double w=Kb*vel;
+	double w1=Ri*Iout;
+	double v=w+w1;
+	return v;
+}
+double conversor(double Vin, double DcVo,double DD1,double DD2,double VV1,double VV2){
+	double Vo=1;
+	double Duty=150/Vin;
+	if (Duty>1){Duty=1;}
+	Vo=(0.02828*DD1*Duty)+(0.02823*DD2*Duty)+(1.938*VV1)-(0.9947*VV2);
+	return Vo;
+}
+
 int out(){
 	if (cont<3000){cont +=1;}
 	else {cont =cont;}
@@ -290,22 +319,35 @@ int out(){
     Xg = ((r*4)+lwr-Xe-Xc)*0.5;
 
     //acondicionamiento par
-    Prom[649]=te;
+    PteR[649]=te;
+    PtcR[649]=tc;
     for(int i=0;i<650;i++){
-        teR += Prom[i];
+        teR += PteR[i];
+        tcR += PtcR[i];
     }
     teR = teR/650;
+    tcR = tcR/650;
 
     if (cont>2){ini=0;} //Recordar añadirle una condición inicial
     //
-    if (cont>2000){tq=te + tc;}
-    Alfa =  (te + tc+ini-tf-tq)/J; //Sumarle ini
+    //if (cont>2000){tq=te + tc;}
+    Alfa =  (teR + tcR + ini - tf - tq)/J; //Sumarle ini
+    PruebaVel += Alfa; //---> No funciona bien
     Vel = integral1(IntIn1,IntOut1);
     IntIn1 = Alfa;
     IntOut1 = Vel;
     teta = integral2(Int2In1, Int2Out1);
     Int2In1 = Vel;
     Int2Out1 = teta;
+    //Generador
+	Vout = Generador(Ri,Kb, Iout,Vel);
+	DcVo= conversor(Vout,DcDuty,DD1,DD2,VV1,VV2);
+	VV2=VV1;
+	DD2=DD1;
+	VV1=DcVo;
+	DD1=Vout;
+	Iout = DcVo/225;
+	tq = Kp*Iout;
     //Modelo termico
     Acilc = (rp*2*PI)*Xc;
     Tg1ant = ((Acilc*(h/(dg*cpg)))/Vg) * (T11-Tg1);
@@ -332,9 +374,9 @@ int out(){
     Vg = (Xc + Xe + Xwr) * Ap;
     
     //acondicionamiento del torque mecanico
-    //Prom = (double*)malloc(650 * sizeof(double));
     for(int i=1;i<650;i++){
-        Prom[i-1] = Prom[i];
+        PteR[i-1] = PteR[i];
+        PtcR[i-1] = PtcR[i];
     }
     
 
@@ -352,12 +394,15 @@ int out(){
     //printf("\n Xe: %f",Xe);
     //printf("\n tc: %f",tc);
     //printf("\n te: %f",te);
-    //printf("\n tq: %f",tq);
+    printf("\n tc: %f",tcR);
+    printf("\n te: %f",teR);
+    printf("\n tq: %f",tq);
     //printf("\n tf: %f",tf);
     //printf("\n Xg: %f",Xg); //Funciona
     //printf("\n Alfa: %f",Alfa);
-    //printf("\n cont: %d",cont);
-    //printf("\n Vel: %f",Vel);
+    //printf("\n cont: %d",cont);PruebaVel
+    printf("\n Vel: %f",Vel);
+    printf("\n PruebaVel: %f",PruebaVel);
     //printf("\n teta: %f",teta);
     //printf("\n Acilc: %f",Acilc);
     //printf("\n Tg1ant: %f",Tg1ant);
@@ -373,6 +418,8 @@ int out(){
     //printf("\n Pg: %f",TG);
     //printf("\n Pg: %f",Pg);
     //printf("\n Vg: %f",Vg);
+    //printf("\n Vout: %f",Vout);
+    //printf("\n Iout: %f",Iout);
     printf("\n ------------------------");
 
 
@@ -385,11 +432,11 @@ int out(){
 	  strcat(text3,"\t");
 	  sprintf(text4,"%5.2f",T22);
 	  strcat(text4,"\t");
-	  sprintf(text5,"%5.2f",teta);
+	  sprintf(text5,"%5.2f",tc);
 	  strcat(text5,"\t");
-	  sprintf(text6,"%5.2f",tq);
+	  sprintf(text6,"%5.2f",te);
 	  strcat(text6,"\t");
-	  sprintf(text7,"%f",Vg);
+	  sprintf(text7,"%5.2f",tcR);
 	  strcat(text7,"\t");
 	  sprintf(text8,"%5.2f",teR);
 	  strcat(text8,"\n");
