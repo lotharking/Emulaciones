@@ -1,18 +1,32 @@
+//gcc -o Prueba Hidro.c -lrt -Wall -lm -lwiringPi
+
+
 #include <stddef.h>
 #include <time.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h>                                      
+#include <wiringSerial.h>
 #include <errno.h>
-#include <string.h>
-#include <unistd.h>
-//#include <termios.h>
+#include <string.h> 
+#include <unistd.h> 
+#include <termios.h>                                    
+#include <wiringPi.h>                                     
 #include <stdint.h>
 #include <sched.h>
-#include <math.h>
-#include <stdbool.h>
+#include <math.h> 
+#include <stdbool.h> 
+//#include <pthread.h>
 #include <semaphore.h>
 
+const int minutes = 60;
+const int seconds = 1;
+
+
 #define PI 3.14159265
+#define LOW_SPIN 2
+#define MID_SPIN 5
+#define NSEC_PER_SEC    1000000000//1000000000
+int estado=0;
 
 //Parametros mecanicos
 double D=1;
@@ -46,7 +60,7 @@ double Pelec=0;
 double DcDuty=1;
 double ConvInSup1=1, ConvInSup2=1, ConvOutSup1=1,ConvOutSup2=1;
 double ConvInInf1=1, ConvInInf2=1, ConvOutInf1=1,ConvOutInf2=1;
-double DcVo=1, DcVoSup = 1, DcVoInf = 1;
+double DcVo=1, DcVoSup = 1, DcVoInf = 1, Duty = 1;
 
 //Conversor corrriente
 double DI1=1, DI2=1, I1=1,I2=1;
@@ -63,6 +77,18 @@ double Mult1=1,Mult2=1;
 double Dq=1;
 double Pot=1;
 double corrient=1;
+
+static inline void tsnorm(struct timespec *ts)
+{
+   while (ts->tv_nsec >= NSEC_PER_SEC) {
+      ts->tv_nsec -= NSEC_PER_SEC;
+      ts->tv_sec++;
+   }
+}
+
+extern int clock_nanosleep(clockid_t __clock_id, int __flags,
+      __const struct timespec *__req,
+      struct timespec *__rem);
 
 //Control inversor
 double InCont1=1,OutCont1=1, Ref=1, Suma=1;
@@ -136,11 +162,17 @@ double tension(double Ri,double Kb,double Iout,double vel){
 	return v;
 }
 
-double conversorSup(double Vin,double ConvInSup1,double ConvInSup2,double ConvOutSup1,double ConvOutSup2){
+//double conversorSup(double Vin,double ConvInSup1,double ConvInSup2,double ConvOutSup1,double ConvOutSup2){
+	//double Vo=1;
+	//double Duty=150/Vin;
+	//if (Duty>1){Duty=1;}
+	//Vo=(0.02833*ConvInSup1*Duty)+(0.02833*ConvInSup2*Duty)+(1.943*ConvOutSup1)-(ConvOutSup2);
+	//return Vo;
+//}
+
+double conversorSup(double Ventrada,double ConvInS1,double ConvInS2,double ConvOutS1,double ConvOutS2){
 	double Vo=1;
-	double Duty=150/Vin;
-	if (Duty>1){Duty=1;}
-	Vo=(0.02833*ConvInSup1*Duty)+(0.02833*ConvInSup2*Duty)+(1.943*ConvOutSup1)-(ConvOutSup2);
+	Vo=(0.01403*Ventrada)+(0.02806*ConvInS1)+(0.01403*ConvInS2)+(1.943*ConvOutS1)-(ConvOutS2);
 	return Vo;
 }
 
@@ -213,17 +245,19 @@ void out(){
 
 	Vout= tension(Ri,Kb, Iout,acumVeloc);
 	//Conversor
+	Duty=(150/1);
+	if (Duty>1){Duty=1;}
 	DcVoSup= conversorSup(1,ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
 	ConvOutSup2 = ConvOutSup1;
 	ConvInSup2=ConvInSup1;
 	ConvOutSup1=DcVoSup;
-	ConvInSup1=1;
+	ConvInSup1=1*Duty;
 	
 	DcVoInf= conversorInf(Iout,ConvInInf1,ConvInInf2,ConvOutInf1,ConvOutInf2);
 	ConvOutInf2 = ConvOutInf1;
 	ConvInInf2=ConvInInf1;
 	ConvOutInf1=DcVoInf;
-	ConvInInf1=1;
+	ConvInInf1=2;
 	
 	DcVo = DcVoSup + DcVoInf;
 	Iout=DcVo/225;
@@ -281,8 +315,8 @@ void out(){
 	//printf("\n TENSION: %f",Vout);
 	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
 	//printf("\n CONVERSOR: %f",DcVo);//Tension en DC--->se pueden  graficar
-	printf("\n CONVERSOR: %f",DcVoSup);
-	//printf("\n CONVERSOR: %f",DcVoInf);
+	printf("\n CONVERSORSUP: %f",DcVoSup);
+	printf("\n CONVERSORINF: %f",DcVoInf);
 	//printf("\n Dq: %f",Dq);//Tension en AC-->ideal tension que se desea ver
 	//printf("\n POTENCIA-AC: %f",Pot);//Potencia Ac-->variable importante
 	//printf("\n SENO: %f",(sen[cont]));
@@ -316,13 +350,63 @@ void out(){
 	fputs(text6,fichero);
 	fputs(text7,fichero);
 }
-int main(void) {
+int main(int argc,char** argv) {
+	//Time
+	struct timespec t;
+	struct sched_param param;
+	int interval=4000000; //en nanoseg--4s--1000000000-->-2 ceros para 10ms
+	
+	
+	if(argc>=2 && atoi(argv[1])>0)
+	{
+		printf("using realtime, priority: %d\n",atoi(argv[1]));
+		param.sched_priority = atoi(argv[1]);
+		/* enable realtime fifo scheduling */
+		if(sched_setscheduler(0, SCHED_FIFO, &param)==-1){
+		perror("sched_setscheduler failed");
+		exit(-1);
+		}
+	}
+	if(argc>=3)
+      interval=atoi(argv[2]);
+      
+	if (wiringPiSetup () == -1)
+    return 1 ;
+   pinMode (2, OUTPUT) ;   
+	
+	
+	fd=serialOpen("/dev/ttyACM0",115200);
+	serialClose(fd);
+	fd=serialOpen("/dev/ttyACM0",115200);
+	
+	sleep(1);
+	
+	/* get current time */
+ 	clock_gettime(0,&t);
+
+	/* start after one second */
+	t.tv_sec++;
   //for (int i = 0;i<=1000;i++)
 	while(1)
 	{
+		/* wait untill next shot */
+      clock_nanosleep(0, TIMER_ABSTIME, &t, NULL);
+      /* do the stuff */
+      
+	if(estado==0){
+		estado=1;
+		}
+	else{
+		estado=0; 
+	}
+	digitalWrite (2, estado) ; 	//pin 13 gpio readall
+	
 	fichero =fopen("graficoH.txt","a");
 	out();
 	fclose(fichero);
+	/* calculate next shot */
+      t.tv_nsec+=interval;
+      tsnorm(&t);
 	}
 	//}
 
