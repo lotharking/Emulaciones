@@ -58,8 +58,8 @@ double Pelec=0;
 
 //Conversor
 double DcDuty=1;
-double ConvInSup1=1, ConvInSup2=1, ConvOutSup1=1,ConvOutSup2=1;
-double ConvInInf1=1, ConvInInf2=1, ConvOutInf1=1,ConvOutInf2=1;
+double ConvInSup1=0, ConvInSup2=0, ConvOutSup1=0,ConvOutSup2=0;
+double ConvInInf1=0, ConvInInf2=0, ConvOutInf1=0,ConvOutInf2=0;
 double DcVo=1, DcVoSup = 1, DcVoInf = 1, Duty = 1;
 
 //Conversor corrriente
