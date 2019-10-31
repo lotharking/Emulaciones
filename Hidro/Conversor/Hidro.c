@@ -51,7 +51,7 @@ double Kp=5.6627;
 double Kb=6.2;
 double Bi=0.1;
 double Vout;
-double Iout=1;
+double Iout=0;
 double Rout=25;
 double PTelec=0;
 double Pelec=0;
@@ -60,7 +60,7 @@ double Pelec=0;
 double DcDuty=1;
 double ConvInSup1=0, ConvInSup2=0, ConvOutSup1=0,ConvOutSup2=0;
 double ConvInInf1=0, ConvInInf2=0, ConvOutInf1=0,ConvOutInf2=0;
-double DcVo=1, DcVoSup = 1, DcVoInf = 1, Duty = 1;
+double DcVo=0, DcVoSup = 0, DcVoInf = 0, Duty = 1;
 
 //Conversor corrriente
 double DI1=1, DI2=1, I1=1,I2=1;
@@ -78,18 +78,6 @@ double Dq=1;
 double Pot=1;
 double corrient=1;
 
-static inline void tsnorm(struct timespec *ts)
-{
-   while (ts->tv_nsec >= NSEC_PER_SEC) {
-      ts->tv_nsec -= NSEC_PER_SEC;
-      ts->tv_sec++;
-   }
-}
-
-extern int clock_nanosleep(clockid_t __clock_id, int __flags,
-      __const struct timespec *__req,
-      struct timespec *__rem);
-
 //Control inversor
 double InCont1=1,OutCont1=1, Ref=1, Suma=1;
 
@@ -106,6 +94,19 @@ int Vrio_char;
 //Parametros integral
 double IntIn1 = 1;
 double IntOut1 = 1;
+
+static inline void tsnorm(struct timespec *ts)
+{
+   while (ts->tv_nsec >= NSEC_PER_SEC) {
+      ts->tv_nsec -= NSEC_PER_SEC;
+      ts->tv_sec++;
+   }
+}
+
+extern int clock_nanosleep(clockid_t __clock_id, int __flags,
+      __const struct timespec *__req,
+      struct timespec *__rem);
+
 
 double integral1(double IntIn1, double IntOut1){
 	double intg=1;
@@ -164,15 +165,13 @@ double tension(double Ri,double Kb,double Iout,double vel){
 
 //double conversorSup(double Vin,double ConvInSup1,double ConvInSup2,double ConvOutSup1,double ConvOutSup2){
 	//double Vo=1;
-	//double Duty=150/Vin;
-	//if (Duty>1){Duty=1;}
-	//Vo=(0.02833*ConvInSup1*Duty)+(0.02833*ConvInSup2*Duty)+(1.943*ConvOutSup1)-(ConvOutSup2);
+	//Vo=(0.02833*ConvInSup1)+(0.02833*ConvInSup2)+(1.943*ConvOutSup1)-(ConvOutSup2);
 	//return Vo;
 //}
 
 double conversorSup(double Ventrada,double ConvInS1,double ConvInS2,double ConvOutS1,double ConvOutS2){
 	double Vo=1;
-	Vo=(0.01403*Ventrada)+(0.02806*ConvInS1)+(0.01403*ConvInS2)+(1.943*ConvOutS1)-(ConvOutS2);
+	Vo=(0.02833*ConvInS1)+(0.02833*ConvInS2)+(1.943*ConvOutS1)-(ConvOutS2);
 	return Vo;
 }
 
@@ -245,19 +244,19 @@ void out(){
 
 	Vout= tension(Ri,Kb, Iout,acumVeloc);
 	//Conversor
-	Duty=(150/1);
+	Duty=(150/Vout);
 	if (Duty>1){Duty=1;}
-	DcVoSup= conversorSup(1,ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
+	DcVoSup= conversorSup(Vout*Duty,ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
 	ConvOutSup2 = ConvOutSup1;
 	ConvInSup2=ConvInSup1;
 	ConvOutSup1=DcVoSup;
-	ConvInSup1=1*Duty;
+	ConvInSup1=Vout*Duty;
 	
 	DcVoInf= conversorInf(Iout,ConvInInf1,ConvInInf2,ConvOutInf1,ConvOutInf2);
 	ConvOutInf2 = ConvOutInf1;
 	ConvInInf2=ConvInInf1;
 	ConvOutInf1=DcVoInf;
-	ConvInInf1=2;
+	ConvInInf1=Iout;
 	
 	DcVo = DcVoSup + DcVoInf;
 	Iout=DcVo/225;
@@ -312,11 +311,11 @@ void out(){
 	//printf("\n PARM: %f",PTmec);
 	//printf("\n ACEL: %f",acel);
 	//printf("\n VANGULAR: %f",acumVeloc);
-	//printf("\n TENSION: %f",Vout);
+	printf("\n TENSION: %f",Vout);
 	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
-	//printf("\n CONVERSOR: %f",DcVo);//Tension en DC--->se pueden  graficar
-	printf("\n CONVERSORSUP: %f",DcVoSup);
-	printf("\n CONVERSORINF: %f",DcVoInf);
+	printf("\n CONVERSOR: %f",DcVo);//Tension en DC--->se pueden  graficar
+	//printf("\n CONVERSORSUP: %f",DcVoSup);
+	//printf("\n CONVERSORINF: %f",DcVoInf);
 	//printf("\n Dq: %f",Dq);//Tension en AC-->ideal tension que se desea ver
 	//printf("\n POTENCIA-AC: %f",Pot);//Potencia Ac-->variable importante
 	//printf("\n SENO: %f",(sen[cont]));
