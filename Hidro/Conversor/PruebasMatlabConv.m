@@ -1,29 +1,28 @@
 %%
-Ventrada = 2;
-ConvInSup1 = 1;
-ConvInSup2 = 1;
-ConvOutSup1 = 1;
-ConvOutSup2 = 1;
+Ventrada = 150;
+ConvInSup1 = 0;
+ConvInSup2 = 0;
+ConvOutSup1 = 0;
+ConvOutSup2 = 0;
+Iout = 0;
+ConvInInf1 = 0;
+ConvInInf2 = 0;
+ConvOutInf1 = 0;
+ConvOutInf2 = 0;
 
 while(1)
-DcVoSup=(0.0001423*Ventrada)+(0.0002846*ConvInSup1)+(0.0001423*ConvInSup2)+(1.999*ConvOutSup1)-(ConvOutSup2)
+DcVoSup=(0.02833*ConvInSup1)+(0.02833*ConvInSup2)+(1.943*ConvOutSup1)-(ConvOutSup2);
 ConvOutSup2 = ConvOutSup1;
 ConvInSup2=ConvInSup1;
 ConvOutSup1=DcVoSup;
 ConvInSup1=Ventrada;
-end
 
-%%
-Vent = 1;
-ConvInInf1 = 1;
-ConvInInf2 = 1;
-ConvOutInf1 = 1;
-ConvOutInf2 = 1;
-
-while(1)
-DcVoInf=(-0.06002*Vent)+(0.06002*ConvInInf2)+(1.999*ConvOutInf1)-(ConvOutInf2)
+DcVoInf=(-1.189*ConvInInf1)+(1.189*ConvInInf2)+(1.943*ConvOutInf1)-(ConvOutInf2);
 ConvOutInf2 = ConvOutInf1;
 ConvInInf2=ConvInInf1;
 ConvOutInf1=DcVoInf;
-ConvInInf1=Vent;
+ConvInInf1=Iout;
+
+DcVo = DcVoSup + DcVoInf
+Iout = DcVo / 225;
 end
