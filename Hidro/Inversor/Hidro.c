@@ -69,14 +69,40 @@ double DI1=1, DI2=1, I1=1,I2=1;
 //Inversor
 double sen[62]=  {0,0.1,0.2,0.3,0.39,0.48,0.56,0.64,0.72,0.78,0.84,0.89,0.93,0.96,1,1,0.99,0.97,0.95,0.91,0.86,0.81,0.75,0.68,0.6,0.52,0.43,0.33,0.24,0.14,0.04,-0.06,-0.16,-0.26,-0.35,-0.44,-0.53,-0.61,-0.69,-0.76,-0.82,-0.87,-0.92,-0.95,-0.98,-0.99,-1,-1,-0.98,-0.96,-0.93,-0.88,-0.83,-0.77,-0.71,-0.63,-0.55,-0.46,-0.37,-0.28,-0.18,-0.08};
 double cose[62]= {1,1,0.99,0.97,0.95,0.91,0.86,0.81,0.75,0.68,0.6,0.52,0.43,0.33,0.24,0.14,0.04,-0.06,-0.16,-0.26,-0.35,-0.44,-0.53,-0.61,-0.69,-0.76,-0.82,-0.87,-0.92,-0.95,-0.98,-0.99,-1,-1,-0.98,-0.96,-0.93,-0.88,-0.83,-0.77,-0.71,-0.63,-0.55,-0.46,-0.37,-0.28,-0.18,-0.08,0,0.1,0.2,0.3,0.39,0.48,0.56,0.64,0.72,0.78,0.84,0.89,0.93,0.96};
-double TinvSen=1, TinvCos=1;
-double InDuty=1;
-double InvSenVin1=1, InvSenVin2=1, InvSenVout1=1, InvSenVout2=1, InvCosVin1=1, InvCosVin2=1, InvCosVout1=1, InvCosVout2=1;
-int cont=0;
-double Mult1=1,Mult2=1;
-double Dq=1;
-double Pot=1;
-double corrient=1;
+int cont = 0;
+double Ws= 2* PI * 60;
+double SumaVD = 1;
+double InContrVD1 = 0;
+double OutContrVD1 = 0;
+double SumaVQ = 1;
+double InContrVQ1 = 0;
+double OutContrVQ1 = 0;
+double VoRef = 40;
+double Vod = 0;
+double Voq = 0;
+double Iinvd = 0;
+double Iinvq = 0;
+double Cinv = 0.00001;
+double Linv = 0.025;
+double Vg = 150;
+double ContrVod = 0;
+double ContrVoq = 0;
+double DesDinVD = 0;
+double DesDinVQ = 0;
+double SumaID = 0;
+double SumaIQ = 0;
+double InContrID1 = 0;
+double OutContrID1 = 0;
+double InContrIQ1 = 0;
+double OutContrIQ1 = 0;
+double ContrIod = 0;
+double ContrIoq = 0;
+double DesDinID = 0;
+double DesDinIQ = 0;
+double Md = 0, Mq = 0;
+double LineaA = 0, LineaB = 0, LineaC = 0;
+
+
 
 //Control inversor
 double InCont1=1,OutCont1=1, Ref=1, Suma=1;
@@ -156,24 +182,19 @@ double aceleracion(double Tmec,double Telect, double Tfric, double iner, double 
 	double y = x/iner;
 	return y;
 }
+//Generador
 double tension(double Ri,double Kb,double Iout,double vel){
 	double w=Kb*vel;
 	double w1=Ri*Iout;
 	double v=w+w1;
 	return v;
 }
-
-//double conversorSup(double Vin,double ConvInSup1,double ConvInSup2,double ConvOutSup1,double ConvOutSup2){
-	//double Vo=1;
-	//Vo=(0.02833*ConvInSup1)+(0.02833*ConvInSup2)+(1.943*ConvOutSup1)-(ConvOutSup2);
-	//return Vo;
-//}
-
+//Conversor DC-DC
 double conversorSup(double Ventrada,double ConvInS1,double ConvInS2,double ConvOutS1,double ConvOutS2){
 	double Vo=1;
 	Vo=(0.02833*ConvInS1)+(0.02833*ConvInS2)+(1.943*ConvOutS1)-(ConvOutS2);
 	return Vo;
-}
+}   
 
 double conversorInf(double Iin,double ConvInInf1,double ConvInInf2,double ConvOutInf1,double ConvOutInf2){
 	double Vo=1;
@@ -181,13 +202,47 @@ double conversorInf(double Iin,double ConvInInf1,double ConvInInf2,double ConvOu
 	return Vo;
 }
 
-
-/* double inversor(double InvVin1, double InvVin2, double InvVout1, double InvVout2)
+//INVERSOR
+//Control de tensión
+double ControlVDQ(double SVDQ, double InCtrVDQ1, double OutCtrVDQ1)
 {
 	double Vo=1;
-	Vo=(0.05413*InvVin1)+(0.04095*InvVin2)+(1.335*InvVout1)-(0.4327*InvVout2);
+	Vo=(SVDQ * 0.5) - (0.495 * InCtrVDQ1) + (OutCtrVDQ1);
 	return Vo;
-} */
+} 
+
+//Control de corriente
+double ControlIDQ(double SIDQ, double InCtrIDQ1, double OutCtrIDQ1)
+{
+	double Vo=1;
+	Vo=(SIDQ * 0.5) - (0.495 * InCtrIDQ1) + (OutCtrIDQ1);
+	return Vo;
+}
+
+//DQ a ABC
+//Primera linea
+double PrimeraABC(double Vd, double Vq, double Vo, double seno, double coseno)
+{
+	double V=1;
+	V = (Vd * seno) + (Vq * coseno) + (Vo);
+	return V;
+}
+
+//Segunda linea
+double SegundaABC(double Vd, double Vq, double Vo, double seno, double coseno)
+{
+	double V=1;
+	V = (Vd * (-(seno* 0.5)-(coseno * (sqrt(3)/2)))) + (Vq * (-(coseno * 0.5)+(seno * (sqrt(3)/2)))) + (Vo);
+	return V;
+}
+
+//Tercera linea
+double TerceraABC(double Vd, double Vq, double Vo, double seno, double coseno)
+{
+	double V=1;
+	V = (Vd * (-(-(seno* 0.5)-(coseno * (sqrt(3)/2)))-(seno))) + (Vq * (-((-(coseno * 0.5)+(seno * (sqrt(3)/2))))-(coseno))) + (Vo);
+	return V;
+}
 
 //double inversor(double InvVin1, double InvVin2, double InvVout1, double InvVout2)
 //{
@@ -229,7 +284,7 @@ void out(){
 		//read_buffer[7]='0';
 		//read_buffer[8]='0';
 
-
+	//TURBINA DE RIO	
 	Planda=landa(acumVeloc,vrio,radio);
 	Plandai=landai(Planda,beta);
 	Pcp=cp(beta,Planda,Plandai);
@@ -237,13 +292,13 @@ void out(){
 	Tvis= acumVeloc*B;
 	PTmec= Tmec(Ppot,acumVeloc);
 	acel = aceleracion(PTmec,PTelec,Tfric,iner, Tvis);
-	//acumVeloc=acumVeloc+acel; //funciona mas rapido acumulando
 	acumVeloc = integral1(IntIn1,IntOut1);
 	IntIn1 = acel;
 	IntOut1 = acumVeloc;
 
 	Vout= tension(Ri,Kb, Iout,acumVeloc);
-	//Conversor
+	
+	//CONVERSOR DC-DC
 	Duty=(150/Vout);
 	if (Duty>1){Duty=1;}
 	DcVoSup= conversorSup(Vout*Duty,ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
@@ -263,27 +318,51 @@ void out(){
 	
 	Pelec=DcVo*Iout;
 	PTelec= Telec(Kp,Iout);
-	//Mult1= InDuty*DcVo*(sen[cont]);
-	//Mult2= InDuty*DcVo*(cose[cont]);
-	//TinvSen= inversor(InvSenVin1, InvSenVin2, InvSenVout1, InvSenVout2);
-	//InvSenVin2=InvSenVin1;
-	//InvSenVout2=InvSenVout1;
-	//InvSenVin1=Mult1;
-	//InvSenVout1=TinvSen;
-	//TinvCos= inversor(InvCosVin1, InvCosVin2, InvCosVout1, InvCosVout2);
-	//InvCosVin2=InvCosVin1;
-	//InvCosVout2=InvCosVout1;
-	//InvCosVin1=Mult2;
-	//InvCosVout1=TinvCos;
-	//Dq=sqrt(((TinvSen*TinvSen))+((TinvCos*TinvCos)));
-	//Suma=Ref-((1/39.2)*Dq);
-	//InDuty=controlInv(Suma,InCont1,OutCont1);
-	//InCont1=Suma;
-	//OutCont1=InDuty;
-	//corrient=Dq/40;
-	//Pot=corrient*Dq;
-	//Iout=Dq/0.1;
-
+	
+	//INVERSOR
+	//Control de tensión
+	SumaVD = VoRef - Vod;
+	SumaVQ = 0 - Voq;
+	ContrVod = ControlVDQ(SumaVD, InContrVD1, OutContrVD1);
+	InContrVD1 = SumaVD;
+	OutContrVD1 = ContrVod;
+	ContrVoq = ControlVDQ(SumaVQ, InContrVQ1, OutContrVQ1);
+	InContrVQ1 = SumaVQ;
+	OutContrVQ1 = ContrVoq;
+	
+	//Desacople de tensión
+	DesDinVD = ContrVod - (Cinv * Voq * Ws);
+	DesDinVQ = ContrVoq + (Cinv * Vod * Ws);
+	
+	//Control de corriente
+	SumaID = DesDinVD - Iinvd;
+	SumaIQ = DesDinVQ - Iinvq;
+	ContrIod = ControlIDQ(SumaID, InContrID1, OutContrID1);
+	InContrID1 = SumaID;
+	OutContrID1 = ContrIod;
+	ContrIoq = ControlIDQ(SumaIQ, InContrIQ1, OutContrIQ1);
+	InContrIQ1 = SumaIQ;
+	OutContrIQ1 = ContrIoq;
+	
+	//Desacople de Corriente
+	DesDinID = ContrIod - (Linv * Iinvq * Ws);
+	DesDinIQ = ContrIoq + (Linv * Iinvd * Ws);
+	Md = (DesDinID + Vod) * (2/Vg);
+	Mq = (DesDinIQ + Voq) * (2/Vg);
+	
+	if (Md > 1){Md = 1;}
+	else if (Md < 1){Md = -1;}
+	else {Md = Md;}
+	
+	if (Mq > 1){Mq = 1;}
+	else if (Mq < 1){Mq = -1;}
+	else {Mq = Mq;}
+	
+	//Generación ABC
+	LineaA = PrimeraABC(40, 0, 0, sen[cont], cose[cont]);
+	LineaB = SegundaABC(40, 0, 0, sen[cont], cose[cont]);
+	LineaC = TerceraABC(40, 0, 0, sen[cont], cose[cont]);
+	
 	//Comuniacion Serial-- envio datos arduino
 	//bits=(int) ((Dq*4095)/70);
 	//memset(buffer,0,sizeof(buffer));
@@ -311,15 +390,18 @@ void out(){
 	//printf("\n PARM: %f",PTmec);
 	//printf("\n ACEL: %f",acel);
 	//printf("\n VANGULAR: %f",acumVeloc);
-	printf("\n TENSION: %f",Vout);
+	//printf("\n TENSION: %f",Vout);
 	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
-	printf("\n CONVERSOR: %f",DcVo);//Tension en DC--->se pueden  graficar
+	//printf("\n CONVERSOR: %f",DcVo);//Tension en DC--->se pueden  graficar
 	//printf("\n CONVERSORSUP: %f",DcVoSup);
 	//printf("\n CONVERSORINF: %f",DcVoInf);
 	//printf("\n Dq: %f",Dq);//Tension en AC-->ideal tension que se desea ver
 	//printf("\n POTENCIA-AC: %f",Pot);//Potencia Ac-->variable importante
 	//printf("\n SENO: %f",(sen[cont]));
 	//printf("\n COSENO: %f",(cose[cont])*InDuty);
+	printf("\n LineaA: %f",LineaA);
+	printf("\n LineaB: %f",LineaB);
+	printf("\n LineaC: %f",LineaC);
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
@@ -327,15 +409,15 @@ void out(){
 	strcat(text1,"\t");
 	sprintf(text2,"%5.2f",Pcp);
 	strcat(text2,"\t");
-	sprintf(text3,"%5.2f",InDuty);
+	sprintf(text3,"%5.2f",Vout);
 	strcat(text3,"\t");
-	sprintf(text4,"%5.2f",DcVo);
+	sprintf(text4,"%5.2f",Iout);
 	strcat(text4,"\t");
-	sprintf(text5,"%5.2f",(cose[cont])*InDuty);
+	sprintf(text5,"%5.2f",LineaA);
 	strcat(text5,"\t");
-	sprintf(text6,"%5.2f",(sen[cont])*InDuty);
+	sprintf(text6,"%5.2f",LineaB);
 	strcat(text6,"\t");
-	sprintf(text7,"%5.2f",Dq);
+	sprintf(text7,"%5.2f",LineaC);
 	strcat(text7,"\n");
 	if (cont<61){cont+=1;}
 	else {cont=0;}
