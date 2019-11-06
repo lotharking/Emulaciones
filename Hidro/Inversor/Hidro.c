@@ -67,8 +67,12 @@ double DI1=1, DI2=1, I1=1,I2=1;
 
 
 //Inversor
-double sen[62]=  {0,0.1,0.2,0.3,0.39,0.48,0.56,0.64,0.72,0.78,0.84,0.89,0.93,0.96,1,1,0.99,0.97,0.95,0.91,0.86,0.81,0.75,0.68,0.6,0.52,0.43,0.33,0.24,0.14,0.04,-0.06,-0.16,-0.26,-0.35,-0.44,-0.53,-0.61,-0.69,-0.76,-0.82,-0.87,-0.92,-0.95,-0.98,-0.99,-1,-1,-0.98,-0.96,-0.93,-0.88,-0.83,-0.77,-0.71,-0.63,-0.55,-0.46,-0.37,-0.28,-0.18,-0.08};
-double cose[62]= {1,1,0.99,0.97,0.95,0.91,0.86,0.81,0.75,0.68,0.6,0.52,0.43,0.33,0.24,0.14,0.04,-0.06,-0.16,-0.26,-0.35,-0.44,-0.53,-0.61,-0.69,-0.76,-0.82,-0.87,-0.92,-0.95,-0.98,-0.99,-1,-1,-0.98,-0.96,-0.93,-0.88,-0.83,-0.77,-0.71,-0.63,-0.55,-0.46,-0.37,-0.28,-0.18,-0.08,0,0.1,0.2,0.3,0.39,0.48,0.56,0.64,0.72,0.78,0.84,0.89,0.93,0.96};
+double senFa[101]=  {0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0};
+double coseFa[101]= {1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1};
+double senFb[101]=  {0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8};
+double coseFb[101]= {-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48};
+double senFc[101]=  {-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96};
+double coseFc[101]= {-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48};
 int cont = 0;
 double Ws= 2* PI * 60;
 double SumaVD = 1;
@@ -80,8 +84,10 @@ double OutContrVQ1 = 0;
 double VoRef = 40;
 double Vod = 0;
 double Voq = 0;
+double Vo0 = 0;
 double Iinvd = 0;
 double Iinvq = 0;
+double Iinv0 = 0;
 double Cinv = 0.00001;
 double Linv = 0.025;
 double Vg = 150;
@@ -100,8 +106,16 @@ double ContrIoq = 0;
 double DesDinID = 0;
 double DesDinIQ = 0;
 double Md = 0, Mq = 0;
-double LineaA = 0, LineaB = 0, LineaC = 0;
-
+double MA = 0, MB = 0, MC = 0;
+double InvSupA = 0, InvInfA = 0, InvSupB = 0, InvInfB = 0, InvSupC = 0, InvInfC = 0;
+double InvSupAIn1 = 0,InvSupAOut1 = 0,InvSupAIn2 = 0,InvSupAOut2 = 0;
+double InvInfAIn1 = 0,InvInfAOut1 = 0,InvInfAIn2 = 0,InvInfAOut2 = 0;
+double InvSupBIn1 = 0,InvSupBOut1 = 0,InvSupBIn2 = 0,InvSupBOut2 = 0;
+double InvInfBIn1 = 0,InvInfBOut1 = 0,InvInfBIn2 = 0,InvInfBOut2 = 0;
+double InvSupCIn1 = 0,InvSupCOut1 = 0,InvSupCIn2 = 0,InvSupCOut2 = 0;
+double InvInfCIn1 = 0,InvInfCOut1 = 0,InvInfCIn2 = 0,InvInfCOut2 = 0;
+double InversorA = 0, InversorB = 0, InversorC = 0;
+double IoutInversorA = 0, IoutInversorB = 0, IoutInversorC = 0;
 
 
 //Control inversor
@@ -232,7 +246,8 @@ double PrimeraABC(double Vd, double Vq, double Vo, double seno, double coseno)
 double SegundaABC(double Vd, double Vq, double Vo, double seno, double coseno)
 {
 	double V=1;
-	V = (Vd * (-(seno* 0.5)-(coseno * (sqrt(3)/2)))) + (Vq * (-(coseno * 0.5)+(seno * (sqrt(3)/2)))) + (Vo);
+	V = (Vd * seno) + (Vq * coseno) + (Vo);
+	//V = (1 * (-(seno* 0.5)-(coseno * (sqrt(3)/2))))+ (Vq * (-(coseno * 0.5)+(seno * (sqrt(3)/2)))) + (Vo);
 	return V;
 }
 
@@ -240,23 +255,47 @@ double SegundaABC(double Vd, double Vq, double Vo, double seno, double coseno)
 double TerceraABC(double Vd, double Vq, double Vo, double seno, double coseno)
 {
 	double V=1;
-	V = (Vd * (-(-(seno* 0.5)-(coseno * (sqrt(3)/2)))-(seno))) + (Vq * (-((-(coseno * 0.5)+(seno * (sqrt(3)/2))))-(coseno))) + (Vo);
+	V = (Vd * seno) + (Vq * coseno) + (Vo);
+	//V = (1 * (-(-(seno* 0.5)-(coseno * (sqrt(3)/2)))-(seno))) + (Vq * (-(-(coseno * 0.5)+(seno * (sqrt(3)/2)))-(coseno))) + (Vo);
 	return V;
 }
 
-//double inversor(double InvVin1, double InvVin2, double InvVout1, double InvVout2)
-//{
-	//double Vo=1;
-	//Vo=(0.0004241*InvVin1)+((0.000001273)*InvVin2)+(0.9953*InvVout1)+(0.0000000000000001105*InvVout2);
-	//return Vo;
-//}
+//ABC a DQ
+//Primera linea
+double PrimeraD(double VA, double VB, double VC, double seno1, double seno2, double seno3)
+{
+	double V=1;
+	V = (2/3)*((VA * seno1) + (VB * seno2)) + (VC * seno3);
+	return V;
+}
 
-//double controlInv(double Suma, double InCont1,double OutCont1)
-//{
-	//double Duty=1;
-	//Duty=(0.5*Suma)-(0.495*InCont1)+(OutCont1);
-	//return Duty;
-//}
+//Segunda linea
+double SegundaQ(double VA, double VB, double VC, double coseno1, double coseno2, double coseno3)
+{
+	double V=1;
+	V = (2/3)*((VA * coseno1) + (VB * coseno2)) + (VC * coseno3);
+	return V;
+}
+
+//Tercera linea
+double Tercera0(double VA, double VB, double VC)
+{
+	double V=1;
+	V = (1/3)*(VA + VB + VC);
+	return V;
+}
+
+double InversorSup(double InvInS1,double InvInS2,double InvOutS1,double InvOutS2){
+	double Vo=1;
+	Vo=(0.02833*InvInS1)+(0.02833*InvInS2)+(1.943*InvOutS1)-(InvOutS2);
+	return Vo;
+}   
+
+double InversorInf(double InvInInf1,double InvInInf2,double InvOutInf1,double InvOutInf2){
+	double Vo=1;
+	Vo=(-1.189*InvInInf1)+(1.189*InvInInf2)+(1.943*InvOutInf1)-(InvOutInf2);
+	return Vo;
+}
 
 //metodo
 
@@ -358,10 +397,58 @@ void out(){
 	else if (Mq < 1){Mq = -1;}
 	else {Mq = Mq;}
 	
-	//Generación ABC
-	LineaA = PrimeraABC(40, 0, 0, sen[cont], cose[cont]);
-	LineaB = SegundaABC(40, 0, 0, sen[cont], cose[cont]);
-	LineaC = TerceraABC(40, 0, 0, sen[cont], cose[cont]);
+	//Generación MABC
+	MA = PrimeraABC(Md, Mq, 0, senFa[cont], coseFa[cont]);
+	MB = SegundaABC(Md, Mq, 0, senFb[cont], coseFb[cont]);
+	MC = TerceraABC(Md, Mq, 0, senFc[cont], coseFc[cont]);
+	
+	//Inversor
+	InvSupA = InversorSup(InvSupAIn1,InvSupAIn2,InvSupAOut1,InvSupAOut2);
+	InvSupAOut2 = InvSupAOut1;
+	InvSupAIn2=InvSupAIn1;
+	ConvOutInf1=InvSupA;
+	InvSupAIn1=MA * DcVo;
+	InvInfA = InversorInf(InvInfAIn1,InvInfAIn2,InvInfAOut1,InvInfAOut2);
+	InvInfAOut2 = InvInfAOut1;
+	InvInfAIn2=InvInfAIn1;
+	InvInfAOut1=InvInfA;
+	InvInfAIn1=IoutInversorA;
+	InvSupB = InversorSup(InvSupBIn1,InvSupBIn2,InvSupBOut1,InvSupBOut2);
+	InvSupBOut2 = InvSupBOut1;
+	InvSupBIn2=InvSupBIn1;
+	InvSupBOut1=InvSupB;
+	InvSupBIn1=MB * DcVo;
+	InvInfB = InversorInf(InvInfBIn1,InvInfBIn2,InvInfBOut1,InvInfBOut2);
+	InvInfBOut2 = InvInfBOut1;
+	InvInfBIn2=InvInfBIn1;
+	InvInfBOut1=InvInfB;
+	InvInfBIn1=IoutInversorB;
+	InvSupC = InversorSup(InvSupCIn1,InvSupCIn2,InvSupCOut1,InvSupCOut2);
+	InvSupCOut2 = InvSupCOut1;
+	InvSupCIn2=InvSupCIn1;
+	InvSupCOut1=InvSupC;
+	InvSupCIn1=MC * DcVo;
+	InvInfC = InversorInf(InvInfCIn1,InvInfCIn2,InvInfCOut1,InvInfCOut2);
+	InvInfCOut2 = InvInfCOut1;
+	InvInfCIn2=InvInfCIn1;
+	InvInfCOut1=InvInfC;
+	InvInfCIn1=IoutInversorC;
+	
+	//Tensión y corriente Inversor trifasica
+	InversorA = InvSupA + InvInfA;
+	InversorB = InvSupB + InvInfB;
+	InversorC = InvSupC + InvInfC;
+	IoutInversorA = InversorA/40;
+	IoutInversorB = InversorB/40;
+	IoutInversorC = InversorC/40;
+	
+	//Tensión y corriente Inversor DQ
+	Vod = PrimeraD(InversorA, InversorB, InversorC, senFa[cont], senFb[cont], senFc[cont]);
+	Voq = SegundaQ(InversorA, InversorB, InversorC, coseFa[cont], coseFb[cont], coseFc[cont]);
+	Vo0 = Tercera0(InversorA, InversorB, InversorC);
+	Iinvd = PrimeraD(IoutInversorA, IoutInversorB, IoutInversorC, senFa[cont], senFb[cont], senFc[cont]);
+	Iinvq = SegundaQ(IoutInversorA, IoutInversorB, IoutInversorC, coseFa[cont], coseFb[cont], coseFc[cont]);
+	Iinv0 = Tercera0(IoutInversorA, IoutInversorB, IoutInversorC);
 	
 	//Comuniacion Serial-- envio datos arduino
 	//bits=(int) ((Dq*4095)/70);
@@ -397,29 +484,30 @@ void out(){
 	//printf("\n CONVERSORINF: %f",DcVoInf);
 	//printf("\n Dq: %f",Dq);//Tension en AC-->ideal tension que se desea ver
 	//printf("\n POTENCIA-AC: %f",Pot);//Potencia Ac-->variable importante
-	//printf("\n SENO: %f",(sen[cont]));
-	//printf("\n COSENO: %f",(cose[cont])*InDuty);
-	printf("\n LineaA: %f",LineaA);
-	printf("\n LineaB: %f",LineaB);
-	printf("\n LineaC: %f",LineaC);
+	//printf("\n SENO: %f",(senFa[cont]));
+	//printf("\n COSENO: %f",(coseFa[cont]));
+	//printf("\n SENO: %f",(senFb[cont]));
+	//printf("\n COSENO: %f",(coseFb[cont]));
+	//printf("\n SENO: %f",(senFc[cont]));
+	//printf("\n COSENO: %f",(coseFc[cont]));
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
-	sprintf(text1,"%5.2f",Planda);
+	sprintf(text1,"%5.2f",senFa[cont]);
 	strcat(text1,"\t");
-	sprintf(text2,"%5.2f",Pcp);
+	sprintf(text2,"%5.2f",coseFa[cont]);
 	strcat(text2,"\t");
-	sprintf(text3,"%5.2f",Vout);
+	sprintf(text3,"%5.2f",senFb[cont]);
 	strcat(text3,"\t");
-	sprintf(text4,"%5.2f",Iout);
+	sprintf(text4,"%5.2f",coseFb[cont]);
 	strcat(text4,"\t");
-	sprintf(text5,"%5.2f",LineaA);
+	sprintf(text5,"%5.2f",senFc[cont]);
 	strcat(text5,"\t");
-	sprintf(text6,"%5.2f",LineaB);
+	sprintf(text6,"%5.2f",coseFc[cont]);
 	strcat(text6,"\t");
-	sprintf(text7,"%5.2f",LineaC);
+	sprintf(text7,"%5.2f",DcVo);
 	strcat(text7,"\n");
-	if (cont<61){cont+=1;}
+	if (cont<100){cont+=1;}
 	else {cont=0;}
 
 	//Guardar txt
