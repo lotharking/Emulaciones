@@ -57,7 +57,6 @@ double PTelec=0;
 double Pelec=0;
 
 //Conversor
-double DcDuty=1;
 double ConvInSup1=0, ConvInSup2=0, ConvOutSup1=0,ConvOutSup2=0;
 double ConvInInf1=0, ConvInInf2=0, ConvOutInf1=0,ConvOutInf2=0;
 double DcVo=0, DcVoSup = 0, DcVoInf = 0, Duty = 1;
@@ -81,7 +80,7 @@ double OutContrVD1 = 0;
 double SumaVQ = 1;
 double InContrVQ1 = 0;
 double OutContrVQ1 = 0;
-double VoRef = 40;
+double VoRef = 220;
 double Vod = 0;
 double Voq = 0;
 double Vo0 = 0;
@@ -116,7 +115,8 @@ double InvSupCIn1 = 0,InvSupCOut1 = 0,InvSupCIn2 = 0,InvSupCOut2 = 0;
 double InvInfCIn1 = 0,InvInfCOut1 = 0,InvInfCIn2 = 0,InvInfCOut2 = 0;
 double InversorA = 0, InversorB = 0, InversorC = 0;
 double IoutInversorA = 0, IoutInversorB = 0, IoutInversorC = 0;
-
+double PruebaA = 0, PruebaB = 0, PruebaC = 0;
+double ConT = 0;
 
 //Control inversor
 double InCont1=1,OutCont1=1, Ref=1, Suma=1;
@@ -204,15 +204,15 @@ double tension(double Ri,double Kb,double Iout,double vel){
 	return v;
 }
 //Conversor DC-DC
-double conversorSup(double Ventrada,double ConvInS1,double ConvInS2,double ConvOutS1,double ConvOutS2){
+double conversorSup(double ConvInS1,double ConvInS2,double ConvOutS1,double ConvOutS2){
 	double Vo=1;
 	Vo=(0.02833*ConvInS1)+(0.02833*ConvInS2)+(1.943*ConvOutS1)-(ConvOutS2);
 	return Vo;
 }   
 
-double conversorInf(double Iin,double ConvInInf1,double ConvInInf2,double ConvOutInf1,double ConvOutInf2){
+double conversorInf(double ConvInI1,double ConvInI2,double ConvOutI1,double ConvOutI2){
 	double Vo=1;
-	Vo=(-1.189*ConvInInf1)+(1.189*ConvInInf2)+(1.943*ConvOutInf1)-(ConvOutInf2);
+	Vo=(-1.189*ConvInI1)+(1.189*ConvInI2)+(1.943*ConvOutI1)-(ConvOutI2);
 	return Vo;
 }
 
@@ -235,45 +235,46 @@ double ControlIDQ(double SIDQ, double InCtrIDQ1, double OutCtrIDQ1)
 
 //DQ a ABC
 //Primera linea
-double PrimeraABC(double Vd, double Vq, double Vo, double seno, double coseno)
+double PrimeraABC(double Vd, double Vq, double Vo)
 {
 	double V=1;
-	V = (Vd * seno) + (Vq * coseno) + (Vo);
+	//V = (Vd * seno) + (Vq * coseno) + (Vo);	
+	V = (Vd * sin(2*PI*60*ConT)) + (Vq * cos(2*PI*60*ConT)) + (Vo);
 	return V;
 }
 
 //Segunda linea
-double SegundaABC(double Vd, double Vq, double Vo, double seno, double coseno)
+double SegundaABC(double Vd, double Vq, double Vo)
 {
 	double V=1;
-	V = (Vd * seno) + (Vq * coseno) + (Vo);
-	//V = (1 * (-(seno* 0.5)-(coseno * (sqrt(3)/2))))+ (Vq * (-(coseno * 0.5)+(seno * (sqrt(3)/2)))) + (Vo);
+	//V = (Vd * seno) + (Vq * coseno) + (Vo);
+	V = (Vd * (-(sin(2*PI*60*ConT)* 0.5)-(cos(2*PI*60*ConT) * (sqrt(3)/2))))+ (Vq * (-(cos(2*PI*60*ConT) * 0.5)+(sin(2*PI*60*ConT) * (sqrt(3)/2)))) + (Vo);
 	return V;
 }
 
 //Tercera linea
-double TerceraABC(double Vd, double Vq, double Vo, double seno, double coseno)
+double TerceraABC(double Vd, double Vq, double Vo)
 {
 	double V=1;
-	V = (Vd * seno) + (Vq * coseno) + (Vo);
-	//V = (1 * (-(-(seno* 0.5)-(coseno * (sqrt(3)/2)))-(seno))) + (Vq * (-(-(coseno * 0.5)+(seno * (sqrt(3)/2)))-(coseno))) + (Vo);
+	//V = (Vd * seno) + (Vq * coseno) + (Vo);
+	V = (Vd * (-(-(sin(2*PI*60*ConT)* 0.5)-(cos(2*PI*60*ConT) * (sqrt(3)/2)))-(sin(2*PI*60*ConT)))) + (Vq * (-(-(cos(2*PI*60*ConT) * 0.5)+(sin(2*PI*60*ConT) * (sqrt(3)/2)))-(cos(2*PI*60*ConT)))) + (Vo);
 	return V;
 }
 
 //ABC a DQ
 //Primera linea
-double PrimeraD(double VA, double VB, double VC, double seno1, double seno2, double seno3)
+double PrimeraD(double VA, double VB, double VC)
 {
 	double V=1;
-	V = (2/3)*((VA * seno1) + (VB * seno2)) + (VC * seno3);
+	V = (2/3.0)*((VA * sin(2*PI*60*ConT)) + (VB * (-(sin(2*PI*60*ConT)* 0.5)-(cos(2*PI*60*ConT) * (sqrt(3)/2.0)))) + (VC * (-(-(sin(2*PI*60*ConT)* 0.5)-(cos(2*PI*60*ConT) * (sqrt(3)/2.0)))-(sin(2*PI*60*ConT)))));
 	return V;
 }
 
 //Segunda linea
-double SegundaQ(double VA, double VB, double VC, double coseno1, double coseno2, double coseno3)
+double SegundaQ(double VA, double VB, double VC)
 {
 	double V=1;
-	V = (2/3)*((VA * coseno1) + (VB * coseno2)) + (VC * coseno3);
+	V = (2/3.0)*((VA * cos(2*PI*60*ConT)) + (VB * (-(cos(2*PI*60*ConT) * 0.5)+(sin(2*PI*60*ConT) * (sqrt(3)/2.0)))) + (VC * (-(-(cos(2*PI*60*ConT) * 0.5)+(sin(2*PI*60*ConT) * (sqrt(3)/2.0)))-(cos(2*PI*60*ConT)))));
 	return V;
 }
 
@@ -281,7 +282,7 @@ double SegundaQ(double VA, double VB, double VC, double coseno1, double coseno2,
 double Tercera0(double VA, double VB, double VC)
 {
 	double V=1;
-	V = (1/3)*(VA + VB + VC);
+	V = (1/3.0)*(VA + VB + VC);
 	return V;
 }
 
@@ -322,7 +323,7 @@ void out(){
 		//read_buffer[6]='0';
 		//read_buffer[7]='0';
 		//read_buffer[8]='0';
-
+	
 	//TURBINA DE RIO	
 	Planda=landa(acumVeloc,vrio,radio);
 	Plandai=landai(Planda,beta);
@@ -338,22 +339,22 @@ void out(){
 	Vout= tension(Ri,Kb, Iout,acumVeloc);
 	
 	//CONVERSOR DC-DC
-	Duty=(150/Vout);
+	Duty=(300/Vout);
 	if (Duty>1){Duty=1;}
-	DcVoSup= conversorSup(Vout*Duty,ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
+	DcVoSup =  conversorSup(ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
 	ConvOutSup2 = ConvOutSup1;
-	ConvInSup2=ConvInSup1;
-	ConvOutSup1=DcVoSup;
-	ConvInSup1=Vout*Duty;
+	ConvInSup2 = ConvInSup1;
+	ConvOutSup1 = DcVoSup;
+	ConvInSup1 = Vout*Duty;
 	
-	DcVoInf= conversorInf(Iout,ConvInInf1,ConvInInf2,ConvOutInf1,ConvOutInf2);
+	DcVoInf = conversorInf(ConvInInf1,ConvInInf2,ConvOutInf1,ConvOutInf2);
 	ConvOutInf2 = ConvOutInf1;
-	ConvInInf2=ConvInInf1;
-	ConvOutInf1=DcVoInf;
-	ConvInInf1=Iout;
+	ConvInInf2 = ConvInInf1;
+	ConvOutInf1 = DcVoInf;
+	ConvInInf1 = Iout;
 	
-	DcVo = DcVoSup + DcVoInf;
-	Iout=DcVo/225;
+	DcVo = DcVoSup + DcVoInf + 0.01;
+	Iout=DcVo/225.0;
 	
 	Pelec=DcVo*Iout;
 	PTelec= Telec(Kp,Iout);
@@ -390,24 +391,24 @@ void out(){
 	Mq = (DesDinIQ + Voq) * (2/Vg);
 	
 	if (Md > 1){Md = 1;}
-	else if (Md < 1){Md = -1;}
+	else if (Md < -1){Md = -1;}
 	else {Md = Md;}
 	
 	if (Mq > 1){Mq = 1;}
-	else if (Mq < 1){Mq = -1;}
+	else if (Mq < -1){Mq = -1;}
 	else {Mq = Mq;}
 	
 	//Generación MABC
-	MA = PrimeraABC(Md, Mq, 0, senFa[cont], coseFa[cont]);
-	MB = SegundaABC(Md, Mq, 0, senFb[cont], coseFb[cont]);
-	MC = TerceraABC(Md, Mq, 0, senFc[cont], coseFc[cont]);
+	MA = PrimeraABC(Md, Mq, 0);
+	MB = SegundaABC(Md, Mq, 0);
+	MC = TerceraABC(Md, Mq, 0);
 	
 	//Inversor
 	InvSupA = InversorSup(InvSupAIn1,InvSupAIn2,InvSupAOut1,InvSupAOut2);
 	InvSupAOut2 = InvSupAOut1;
 	InvSupAIn2=InvSupAIn1;
-	ConvOutInf1=InvSupA;
-	InvSupAIn1=MA * DcVo;
+	InvSupAOut1=InvSupA;
+	InvSupAIn1=MA * 300;
 	InvInfA = InversorInf(InvInfAIn1,InvInfAIn2,InvInfAOut1,InvInfAOut2);
 	InvInfAOut2 = InvInfAOut1;
 	InvInfAIn2=InvInfAIn1;
@@ -417,7 +418,7 @@ void out(){
 	InvSupBOut2 = InvSupBOut1;
 	InvSupBIn2=InvSupBIn1;
 	InvSupBOut1=InvSupB;
-	InvSupBIn1=MB * DcVo;
+	InvSupBIn1=MB * 300;
 	InvInfB = InversorInf(InvInfBIn1,InvInfBIn2,InvInfBOut1,InvInfBOut2);
 	InvInfBOut2 = InvInfBOut1;
 	InvInfBIn2=InvInfBIn1;
@@ -427,7 +428,7 @@ void out(){
 	InvSupCOut2 = InvSupCOut1;
 	InvSupCIn2=InvSupCIn1;
 	InvSupCOut1=InvSupC;
-	InvSupCIn1=MC * DcVo;
+	InvSupCIn1=MC * 300;
 	InvInfC = InversorInf(InvInfCIn1,InvInfCIn2,InvInfCOut1,InvInfCOut2);
 	InvInfCOut2 = InvInfCOut1;
 	InvInfCIn2=InvInfCIn1;
@@ -438,16 +439,16 @@ void out(){
 	InversorA = InvSupA + InvInfA;
 	InversorB = InvSupB + InvInfB;
 	InversorC = InvSupC + InvInfC;
-	IoutInversorA = InversorA/40;
-	IoutInversorB = InversorB/40;
-	IoutInversorC = InversorC/40;
+	IoutInversorA = InversorA/40.0;
+	IoutInversorB = InversorB/40.0;
+	IoutInversorC = InversorC/40.0;
 	
 	//Tensión y corriente Inversor DQ
-	Vod = PrimeraD(InversorA, InversorB, InversorC, senFa[cont], senFb[cont], senFc[cont]);
-	Voq = SegundaQ(InversorA, InversorB, InversorC, coseFa[cont], coseFb[cont], coseFc[cont]);
+	Vod = PrimeraD(InversorA, InversorB, InversorC);
+	Voq = SegundaQ(InversorA, InversorB, InversorC);
 	Vo0 = Tercera0(InversorA, InversorB, InversorC);
-	Iinvd = PrimeraD(IoutInversorA, IoutInversorB, IoutInversorC, senFa[cont], senFb[cont], senFc[cont]);
-	Iinvq = SegundaQ(IoutInversorA, IoutInversorB, IoutInversorC, coseFa[cont], coseFb[cont], coseFc[cont]);
+	Iinvd = PrimeraD(IoutInversorA, IoutInversorB, IoutInversorC);
+	Iinvq = SegundaQ(IoutInversorA, IoutInversorB, IoutInversorC);
 	Iinv0 = Tercera0(IoutInversorA, IoutInversorB, IoutInversorC);
 	
 	//Comuniacion Serial-- envio datos arduino
@@ -479,21 +480,22 @@ void out(){
 	//printf("\n VANGULAR: %f",acumVeloc);
 	//printf("\n TENSION: %f",Vout);
 	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
-	//printf("\n CONVERSOR: %f",DcVo);//Tension en DC--->se pueden  graficar
 	//printf("\n CONVERSORSUP: %f",DcVoSup);
 	//printf("\n CONVERSORINF: %f",DcVoInf);
-	//printf("\n Dq: %f",Dq);//Tension en AC-->ideal tension que se desea ver
-	//printf("\n POTENCIA-AC: %f",Pot);//Potencia Ac-->variable importante
+	//printf("\n CONVERSOR: %f",DcVo);//Tension en DC
+	printf("\n REF CORRIENTE: %f",Vod);
+	//printf("\n POTENCIA-AC: %f",Pot);
 	//printf("\n SENO: %f",(senFa[cont]));
 	//printf("\n COSENO: %f",(coseFa[cont]));
 	//printf("\n SENO: %f",(senFb[cont]));
 	//printf("\n COSENO: %f",(coseFb[cont]));
 	//printf("\n SENO: %f",(senFc[cont]));
 	//printf("\n COSENO: %f",(coseFc[cont]));
+	//printf("\n SENO: %f",(PruebaA));
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
-	sprintf(text1,"%5.2f",senFa[cont]);
+	sprintf(text1,"%5.2f",Vod);
 	strcat(text1,"\t");
 	sprintf(text2,"%5.2f",coseFa[cont]);
 	strcat(text2,"\t");
@@ -501,12 +503,14 @@ void out(){
 	strcat(text3,"\t");
 	sprintf(text4,"%5.2f",coseFb[cont]);
 	strcat(text4,"\t");
-	sprintf(text5,"%5.2f",senFc[cont]);
+	sprintf(text5,"%5.2f",PruebaA);
 	strcat(text5,"\t");
-	sprintf(text6,"%5.2f",coseFc[cont]);
+	sprintf(text6,"%5.2f",PruebaB);
 	strcat(text6,"\t");
-	sprintf(text7,"%5.2f",DcVo);
+	sprintf(text7,"%5.2f",PruebaC);
 	strcat(text7,"\n");
+	if (ConT<0.016){ConT+=0.001;}
+	else {ConT=0;}
 	if (cont<100){cont+=1;}
 	else {cont=0;}
 
