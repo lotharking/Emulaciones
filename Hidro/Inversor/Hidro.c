@@ -74,12 +74,12 @@ double senFc[101]=  {-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.
 double coseFc[101]= {-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48};
 int cont = 0;
 double Ws= 2* PI * 60;
-double SumaVD = 1;
-double InContrVD1 = 0;
-double OutContrVD1 = 0;
+double SumaVD = 0;
+double InContrVD1 = 1;
+double OutContrVD1 = 1;
 double SumaVQ = 1;
-double InContrVQ1 = 0;
-double OutContrVQ1 = 0;
+double InContrVQ1 = 1;
+double OutContrVQ1 = 1;
 double VoRef = 220;
 double Vod = 0;
 double Voq = 0;
@@ -90,10 +90,10 @@ double Iinv0 = 0;
 double Cinv = 0.00001;
 double Linv = 0.025;
 double Vg = 150;
-double ContrVod = 0;
-double ContrVoq = 0;
-double DesDinVD = 0;
-double DesDinVQ = 0;
+double ContrVod = 1;
+double ContrVoq = 1;
+double DesDinVD = 1;
+double DesDinVQ = 1;
 double SumaID = 0;
 double SumaIQ = 0;
 double InContrID1 = 0;
@@ -115,7 +115,7 @@ double InvSupCIn1 = 0,InvSupCOut1 = 0,InvSupCIn2 = 0,InvSupCOut2 = 0;
 double InvInfCIn1 = 0,InvInfCOut1 = 0,InvInfCIn2 = 0,InvInfCOut2 = 0;
 double InversorA = 0, InversorB = 0, InversorC = 0;
 double IoutInversorA = 0, IoutInversorB = 0, IoutInversorC = 0;
-double PruebaA = 0, PruebaB = 0, PruebaC = 0;
+//double PruebaA = 0, PruebaB = 0, PruebaC = 0;
 double ConT = 0;
 
 //Control inversor
@@ -125,7 +125,7 @@ double InCont1=1,OutCont1=1, Ref=1, Suma=1;
 double acumVeloc=1;
 int bits= 0;
 FILE* fichero;
-char text1[20],text2[20],text3[20],text4[20],text5[20],text6[20],text7[20];
+char text1[20],text2[20],text3[20],text4[20],text5[20],text6[20],text7[20],text8[20],text9[20];
 char buffer[8],read_buffer[9];
 int bytes_read = 0;
 int fd;
@@ -266,15 +266,31 @@ double TerceraABC(double Vd, double Vq, double Vo)
 double PrimeraD(double VA, double VB, double VC)
 {
 	double V=1;
-	V = (2/3.0)*((VA * sin(2*PI*60*ConT)) + (VB * (-(sin(2*PI*60*ConT)* 0.5)-(cos(2*PI*60*ConT) * (sqrt(3)/2.0)))) + (VC * (-(-(sin(2*PI*60*ConT)* 0.5)-(cos(2*PI*60*ConT) * (sqrt(3)/2.0)))-(sin(2*PI*60*ConT)))));
+	double w = 2*PI*60;
+	//double VH = 220*sin(w*ConT);	
+	//double VI = 220*sin(w*ConT- 2*PI/3);	
+	//double VJ = 220*sin(w*ConT+2*PI/3);	
+	double V1 = sin(w*ConT);	
+	double V2 = -0.5*sin(w*ConT)-sqrt(3)/2.0*cos(w*ConT);
+	double V3 = -V2-sin(w*ConT);
+	V = (2/3.0)*(VA*V1+VB*V2+VC*V3);
+	//V = (2/3.0)*(VH*V1+VI*V2+VJ*V3);
 	return V;
 }
 
 //Segunda linea
 double SegundaQ(double VA, double VB, double VC)
 {
-	double V=1;
-	V = (2/3.0)*((VA * cos(2*PI*60*ConT)) + (VB * (-(cos(2*PI*60*ConT) * 0.5)+(sin(2*PI*60*ConT) * (sqrt(3)/2.0)))) + (VC * (-(-(cos(2*PI*60*ConT) * 0.5)+(sin(2*PI*60*ConT) * (sqrt(3)/2.0)))-(cos(2*PI*60*ConT)))));
+	double V = 1;
+	double w = 2*PI*60;
+	//double VH = 220*sin(w*ConT);	
+	//double VI = 220*sin(w*ConT- 2*PI/3);	
+	//double VJ = 220*sin(w*ConT+2*PI/3);	
+	double V1 = cos(w*ConT);	
+	double V2 = sqrt(3)/2.0*sin(w*ConT)-0.5*cos(w*ConT);
+	double V3 = -V2-cos(w*ConT);
+	V = (2/3.0)*(VA*V1+VB*V2+VC*V3);
+	//V = (2/3.0)*(VH*V1+VI*V2+VJ*V3);
 	return V;
 }
 
@@ -399,9 +415,12 @@ void out(){
 	else {Mq = Mq;}
 	
 	//Generación MABC
-	MA = PrimeraABC(Md, Mq, 0);
-	MB = SegundaABC(Md, Mq, 0);
-	MC = TerceraABC(Md, Mq, 0);
+	MA = PrimeraABC(0.707, 0.691, 0);
+	MB = SegundaABC(0.707, 0.691, 0);
+	MC = TerceraABC(0.707, 0.691, 0);
+	//MA = PrimeraABC(Md, Mq, 0);
+	//MB = SegundaABC(Md, Mq, 0);
+	//MC = TerceraABC(Md, Mq, 0);
 	
 	//Inversor
 	InvSupA = InversorSup(InvSupAIn1,InvSupAIn2,InvSupAOut1,InvSupAOut2);
@@ -439,11 +458,13 @@ void out(){
 	InversorA = InvSupA + InvInfA;
 	InversorB = InvSupB + InvInfB;
 	InversorC = InvSupC + InvInfC;
-	IoutInversorA = InversorA/40.0;
-	IoutInversorB = InversorB/40.0;
-	IoutInversorC = InversorC/40.0;
+	IoutInversorA = InversorA/10.0;
+	IoutInversorB = InversorB/10.0;
+	IoutInversorC = InversorC/10.0;
 	
 	//Tensión y corriente Inversor DQ
+	//Vod = PrimeraD(1, 2, 3);
+	//Voq = SegundaQ(1, 2, 3);
 	Vod = PrimeraD(InversorA, InversorB, InversorC);
 	Voq = SegundaQ(InversorA, InversorB, InversorC);
 	Vo0 = Tercera0(InversorA, InversorB, InversorC);
@@ -482,37 +503,47 @@ void out(){
 	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
 	//printf("\n CONVERSORSUP: %f",DcVoSup);
 	//printf("\n CONVERSORINF: %f",DcVoInf);
-	//printf("\n CONVERSOR: %f",DcVo);//Tension en DC
-	printf("\n REF CORRIENTE: %f",Vod);
-	//printf("\n POTENCIA-AC: %f",Pot);
-	//printf("\n SENO: %f",(senFa[cont]));
-	//printf("\n COSENO: %f",(coseFa[cont]));
-	//printf("\n SENO: %f",(senFb[cont]));
-	//printf("\n COSENO: %f",(coseFb[cont]));
-	//printf("\n SENO: %f",(senFc[cont]));
-	//printf("\n COSENO: %f",(coseFc[cont]));
-	//printf("\n SENO: %f",(PruebaA));
+	//printf("\n CONVERSOR: %f",DcVo);//Tension en DCSumaVD
+	//printf("\n SUMVD: %f",SumaVD);
+	//printf("\n RCURRENT: %f",DesDinVD);
+	//printf("\n Md: %f",Md);
+	//printf("\n Mq: %f",Mq);
+	//printf("\n MA: %f",MA);
+	//printf("\n MB: %f",MB);
+	//printf("\n MC: %f",MC);
+	//printf("\n InversorA: %f",InversorA);
+	//printf("\n InversorB: %f",InversorB);
+	//printf("\n InversorC: %f",InversorC);
+	//printf("\n IoutInversorA: %f",IoutInversorA);
+	//printf("\n IoutInversorB: %f",IoutInversorB);
+	//printf("\n IoutInversorC: %f",IoutInversorC);
+	printf("\n Vod: %f",Vod);
+	printf("\n Voq: %f",Voq);
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
-	sprintf(text1,"%5.2f",Vod);
+	sprintf(text1,"%5.4f",sin(2*PI*60*ConT));
 	strcat(text1,"\t");
-	sprintf(text2,"%5.2f",coseFa[cont]);
+	sprintf(text2,"%5.4f",(2/3.0)*(InversorB*((-sin(2*PI*60*ConT)*0.5)-cos(2*PI*60*ConT)*(0.8660254037844386))+(InversorA*sin(2*PI*60*ConT))+InversorC*((sin(2*PI*60*ConT)*0.5)+(cos(2*PI*60*ConT)*(0.8660254037844386))-sin(2*PI*60*ConT))));
 	strcat(text2,"\t");
-	sprintf(text3,"%5.2f",senFb[cont]);
+	sprintf(text3,"%5.4f",(sin(2*PI*60*ConT)*0.5)+(cos(2*PI*60*ConT)*(0.8660254037844386))-sin(2*PI*60*ConT));
 	strcat(text3,"\t");
-	sprintf(text4,"%5.2f",coseFb[cont]);
+	sprintf(text4,"%5.4f",(2/3.0)*((InversorA*cos(2*PI*60*ConT))+InversorB*(sin(2*PI*60*ConT) * (sqrt(3)/2.0)-(cos(2*PI*60*ConT) * 0.5))+InversorC*(((cos(2*PI*60*ConT) * 0.5)-(sin(2*PI*60*ConT) * (sqrt(3)/2.0)))-(cos(2*PI*60*ConT)))));
 	strcat(text4,"\t");
-	sprintf(text5,"%5.2f",PruebaA);
+	sprintf(text5,"%5.4f",sin(2*PI*60*ConT) * (sqrt(3)/2)-(cos(2*PI*60*ConT) * 0.5));
 	strcat(text5,"\t");
-	sprintf(text6,"%5.2f",PruebaB);
+	sprintf(text6,"%5.4f",((cos(2*PI*60*ConT) * 0.5)-(sin(2*PI*60*ConT) * (sqrt(3)/2)))-(cos(2*PI*60*ConT)));
 	strcat(text6,"\t");
-	sprintf(text7,"%5.2f",PruebaC);
-	strcat(text7,"\n");
-	if (ConT<0.016){ConT+=0.001;}
+	sprintf(text7,"%5.4f",InversorA);
+	strcat(text7,"\t");
+	sprintf(text8,"%5.4f",InversorB);
+	strcat(text8,"\t");
+	sprintf(text9,"%5.4f",InversorC);
+	strcat(text9,"\n");
+	if (ConT<0.016){ConT+=(0.001/16.0);}
 	else {ConT=0;}
-	if (cont<100){cont+=1;}
-	else {cont=0;}
+	//if (cont<100){cont+=1;}
+	//else {cont=0;}
 
 	//Guardar txt
 	fputs(text1,fichero);
@@ -522,6 +553,8 @@ void out(){
 	fputs(text5,fichero);
 	fputs(text6,fichero);
 	fputs(text7,fichero);
+	fputs(text8,fichero);
+	fputs(text9,fichero);
 }
 int main(int argc,char** argv) {
 	//Time
