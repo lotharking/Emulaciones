@@ -81,7 +81,7 @@ double SumaVQ = 1;
 double InContrVQ1 = 1;
 double OutContrVQ1 = 1;
 double VoRef = 220;
-double Vod = 0;
+double Vod = 220;
 double Voq = 0;
 double Vo0 = 0;
 double Iinvd = 0;
@@ -113,10 +113,11 @@ double InvSupBIn1 = 0,InvSupBOut1 = 0,InvSupBIn2 = 0,InvSupBOut2 = 0;
 double InvInfBIn1 = 0,InvInfBOut1 = 0,InvInfBIn2 = 0,InvInfBOut2 = 0;
 double InvSupCIn1 = 0,InvSupCOut1 = 0,InvSupCIn2 = 0,InvSupCOut2 = 0;
 double InvInfCIn1 = 0,InvInfCOut1 = 0,InvInfCIn2 = 0,InvInfCOut2 = 0;
+double RefIn1 = 0,RefOut1 = 0,RefIn2 = 0,RefOut2 = 0;
 double InversorA = 0, InversorB = 0, InversorC = 0;
 double IoutInversorA = 0, IoutInversorB = 0, IoutInversorC = 0;
 //double PruebaA = 0, PruebaB = 0, PruebaC = 0;
-double ConT = 0;
+double ConT = 0,ConT2 = 0, CruceXCero = 0, InvAnterior = 1;
 
 //Control inversor
 double InCont1=1,OutCont1=1, Ref=1, Suma=1;
@@ -238,8 +239,10 @@ double ControlIDQ(double SIDQ, double InCtrIDQ1, double OutCtrIDQ1)
 double PrimeraABC(double Vd, double Vq, double Vo)
 {
 	double V=1;
-	//V = (Vd * seno) + (Vq * coseno) + (Vo);	
-	V = (Vd * sin(2*PI*60*ConT)) + (Vq * cos(2*PI*60*ConT)) + (Vo);
+	double w = 2*PI*60;
+	double V1 = sin(w*ConT);
+	double V2 = cos(w*ConT);
+	V = (Vd * V1) + (Vq * V2) + (Vo);
 	return V;
 }
 
@@ -247,8 +250,10 @@ double PrimeraABC(double Vd, double Vq, double Vo)
 double SegundaABC(double Vd, double Vq, double Vo)
 {
 	double V=1;
-	//V = (Vd * seno) + (Vq * coseno) + (Vo);
-	V = (Vd * (-(sin(2*PI*60*ConT)* 0.5)-(cos(2*PI*60*ConT) * (sqrt(3)/2))))+ (Vq * (-(cos(2*PI*60*ConT) * 0.5)+(sin(2*PI*60*ConT) * (sqrt(3)/2)))) + (Vo);
+	double w = 2*PI*60;
+	double V1 = -(sin(w*ConT)* 0.5)-(cos(w*ConT) * (sqrt(3)/2));
+	double V2 = -(cos(w*ConT) * 0.5)+(sin(w*ConT) * (sqrt(3)/2));
+	V = (Vd * V1)+ (Vq * V2) + (Vo);
 	return V;
 }
 
@@ -256,8 +261,10 @@ double SegundaABC(double Vd, double Vq, double Vo)
 double TerceraABC(double Vd, double Vq, double Vo)
 {
 	double V=1;
-	//V = (Vd * seno) + (Vq * coseno) + (Vo);
-	V = (Vd * (-(-(sin(2*PI*60*ConT)* 0.5)-(cos(2*PI*60*ConT) * (sqrt(3)/2)))-(sin(2*PI*60*ConT)))) + (Vq * (-(-(cos(2*PI*60*ConT) * 0.5)+(sin(2*PI*60*ConT) * (sqrt(3)/2)))-(cos(2*PI*60*ConT)))) + (Vo);
+	double w = 2*PI*60;
+	double V1 = -(-(sin(w*ConT)* 0.5)-(cos(w*ConT) * (sqrt(3)/2)))-(sin(w*ConT));
+	double V2 = -(-(cos(w*ConT) * 0.5)+(sin(w*ConT) * (sqrt(3)/2)))-(cos(w*ConT));
+	V = (Vd * V1) + (Vq * V2) + (Vo);
 	return V;
 }
 
@@ -302,15 +309,22 @@ double Tercera0(double VA, double VB, double VC)
 	return V;
 }
 
-double InversorSup(double InvInS1,double InvInS2,double InvOutS1,double InvOutS2){
+double InversorSup(double in, double InvInS1,double InvInS2,double InvOutS1,double InvOutS2){
 	double Vo=1;
-	Vo=(0.02833*InvInS1)+(0.02833*InvInS2)+(1.943*InvOutS1)-(InvOutS2);
+	Vo=(0.01993*InvInS1)+(0.01993*InvInS2)+(1.96*InvOutS1)-(InvOutS2);
+	//Vo=(0.5*in)+(InvInS1)+(0.5*InvInS2)-(InvOutS2);
 	return Vo;
 }   
 
-double InversorInf(double InvInInf1,double InvInInf2,double InvOutInf1,double InvOutInf2){
+double InversorInf(double inI, double InvInI1,double InvInI2,double InvOutI1,double InvOutI2){
 	double Vo=1;
-	Vo=(-1.189*InvInInf1)+(1.189*InvInInf2)+(1.943*InvOutInf1)-(InvOutInf2);
+	Vo=(-9.933*InvInI1)+(9.933*InvInI2)+(1.96*InvOutI1)-(InvOutI2);
+	return Vo;
+}
+
+double Referencia(double Retin, double RetIn1,double RetIn2,double RetOut1,double RetOut2){
+	double Vo=1;
+	Vo=(0.0198*RetIn1)+(0.9802*RetOut1);
 	return Vo;
 }
 
@@ -376,6 +390,11 @@ void out(){
 	PTelec= Telec(Kp,Iout);
 	
 	//INVERSOR
+	//Referencia
+	VoRef = Referencia(220,RefIn1,RefIn2,RefOut1,RefOut2);
+	RefIn1 = 220;
+	RefOut1 = VoRef;
+	
 	//Control de tensión
 	SumaVD = VoRef - Vod;
 	SumaVQ = 0 - Voq;
@@ -387,8 +406,10 @@ void out(){
 	OutContrVQ1 = ContrVoq;
 	
 	//Desacople de tensión
-	DesDinVD = ContrVod - (Cinv * Voq * Ws);
-	DesDinVQ = ContrVoq + (Cinv * Vod * Ws);
+	DesDinVD = 5.5 - (Cinv * Voq * Ws);
+	DesDinVQ = -0.8294 + (Cinv * Vod * Ws);
+	//DesDinVD = ContrVod - (Cinv * Voq * Ws);
+	//DesDinVQ = ContrVoq + (Cinv * Vod * Ws);
 	
 	//Control de corriente
 	SumaID = DesDinVD - Iinvd;
@@ -415,52 +436,59 @@ void out(){
 	else {Mq = Mq;}
 	
 	//Generación MABC
-	MA = PrimeraABC(0.707, 0.691, 0);
-	MB = SegundaABC(0.707, 0.691, 0);
-	MC = TerceraABC(0.707, 0.691, 0);
-	//MA = PrimeraABC(Md, Mq, 0);
-	//MB = SegundaABC(Md, Mq, 0);
-	//MC = TerceraABC(Md, Mq, 0);
+	//MA = PrimeraABC(0.7160, 0.1856, 0);
+	//MB = SegundaABC(0.7160, 0.1856, 0);
+	//MC = TerceraABC(0.7160, 0.1856, 0);
+	MA = PrimeraABC(Md, Mq, 0);
+	MB = SegundaABC(Md, Mq, 0);
+	MC = TerceraABC(Md, Mq, 0);
 	
 	//Inversor
-	InvSupA = InversorSup(InvSupAIn1,InvSupAIn2,InvSupAOut1,InvSupAOut2);
+	InvSupA = InversorSup(MA * 300,InvSupAIn1,InvSupAIn2,InvSupAOut1,InvSupAOut2);
 	InvSupAOut2 = InvSupAOut1;
 	InvSupAIn2=InvSupAIn1;
 	InvSupAOut1=InvSupA;
 	InvSupAIn1=MA * 300;
-	InvInfA = InversorInf(InvInfAIn1,InvInfAIn2,InvInfAOut1,InvInfAOut2);
+	InvInfA = InversorInf(IoutInversorA,InvInfAIn1,InvInfAIn2,InvInfAOut1,InvInfAOut2);
 	InvInfAOut2 = InvInfAOut1;
 	InvInfAIn2=InvInfAIn1;
 	InvInfAOut1=InvInfA;
 	InvInfAIn1=IoutInversorA;
-	InvSupB = InversorSup(InvSupBIn1,InvSupBIn2,InvSupBOut1,InvSupBOut2);
+	InvSupB = InversorSup(MB * 300,InvSupBIn1,InvSupBIn2,InvSupBOut1,InvSupBOut2);
 	InvSupBOut2 = InvSupBOut1;
 	InvSupBIn2=InvSupBIn1;
 	InvSupBOut1=InvSupB;
 	InvSupBIn1=MB * 300;
-	InvInfB = InversorInf(InvInfBIn1,InvInfBIn2,InvInfBOut1,InvInfBOut2);
+	InvInfB = InversorInf(IoutInversorB,InvInfBIn1,InvInfBIn2,InvInfBOut1,InvInfBOut2);
 	InvInfBOut2 = InvInfBOut1;
 	InvInfBIn2=InvInfBIn1;
 	InvInfBOut1=InvInfB;
 	InvInfBIn1=IoutInversorB;
-	InvSupC = InversorSup(InvSupCIn1,InvSupCIn2,InvSupCOut1,InvSupCOut2);
+	InvSupC = InversorSup(MC * 300,InvSupCIn1,InvSupCIn2,InvSupCOut1,InvSupCOut2);
 	InvSupCOut2 = InvSupCOut1;
 	InvSupCIn2=InvSupCIn1;
 	InvSupCOut1=InvSupC;
 	InvSupCIn1=MC * 300;
-	InvInfC = InversorInf(InvInfCIn1,InvInfCIn2,InvInfCOut1,InvInfCOut2);
+	InvInfC = InversorInf(IoutInversorC,InvInfCIn1,InvInfCIn2,InvInfCOut1,InvInfCOut2);
 	InvInfCOut2 = InvInfCOut1;
 	InvInfCIn2=InvInfCIn1;
 	InvInfCOut1=InvInfC;
 	InvInfCIn1=IoutInversorC;
 	
 	//Tensión y corriente Inversor trifasica
+	InvAnterior = InversorA;
 	InversorA = InvSupA + InvInfA;
 	InversorB = InvSupB + InvInfB;
 	InversorC = InvSupC + InvInfC;
-	IoutInversorA = InversorA/10.0;
-	IoutInversorB = InversorB/10.0;
-	IoutInversorC = InversorC/10.0;
+	IoutInversorA = InversorA/40.0;
+	IoutInversorB = InversorB/40.0;
+	IoutInversorC = InversorC/40.0;
+	
+	//Prueba
+	if (InversorA>=0 && InvAnterior<0){CruceXCero=1;}
+	else {CruceXCero=0;}
+	if (CruceXCero == 1){ConT2 = 0.000;}
+	//else {ConT += 0.001;}
 	
 	//Tensión y corriente Inversor DQ
 	//Vod = PrimeraD(1, 2, 3);
@@ -471,6 +499,7 @@ void out(){
 	Iinvd = PrimeraD(IoutInversorA, IoutInversorB, IoutInversorC);
 	Iinvq = SegundaQ(IoutInversorA, IoutInversorB, IoutInversorC);
 	Iinv0 = Tercera0(IoutInversorA, IoutInversorB, IoutInversorC);
+	
 	
 	//Comuniacion Serial-- envio datos arduino
 	//bits=(int) ((Dq*4095)/70);
@@ -505,9 +534,17 @@ void out(){
 	//printf("\n CONVERSORINF: %f",DcVoInf);
 	//printf("\n CONVERSOR: %f",DcVo);//Tension en DCSumaVD
 	//printf("\n SUMVD: %f",SumaVD);
+	//printf("\n SUMVD: %f",SumaVQ);
 	//printf("\n RCURRENT: %f",DesDinVD);
-	//printf("\n Md: %f",Md);
-	//printf("\n Mq: %f",Mq);
+	//printf("\n RCURRENT: %f",DesDinVQ);
+	//printf("\n SUMVD: %f",SumaID);
+	//printf("\n SUMVQ: %f",SumaIQ);
+	//printf("\n RCURRENTD: %f",DesDinID);
+	//printf("\n RCURRENTD: %f",DesDinIQ);
+	//printf("\n ContrIod: %f",ContrIod);
+	//printf("\n ContrIoq: %f",ContrIoq);
+	printf("\n Md: %f",Md);
+	printf("\n Mq: %f",Mq);
 	//printf("\n MA: %f",MA);
 	//printf("\n MB: %f",MB);
 	//printf("\n MC: %f",MC);
@@ -517,14 +554,16 @@ void out(){
 	//printf("\n IoutInversorA: %f",IoutInversorA);
 	//printf("\n IoutInversorB: %f",IoutInversorB);
 	//printf("\n IoutInversorC: %f",IoutInversorC);
-	printf("\n Vod: %f",Vod);
-	printf("\n Voq: %f",Voq);
+	//printf("\n Vod: %f",Vod);
+	//printf("\n Voq: %f",Voq);
+	//printf("\n Iinvd: %f",Iinvd);
+	//printf("\n Iinvq: %f",Iinvq);
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
 	sprintf(text1,"%5.4f",sin(2*PI*60*ConT));
 	strcat(text1,"\t");
-	sprintf(text2,"%5.4f",(2/3.0)*(InversorB*((-sin(2*PI*60*ConT)*0.5)-cos(2*PI*60*ConT)*(0.8660254037844386))+(InversorA*sin(2*PI*60*ConT))+InversorC*((sin(2*PI*60*ConT)*0.5)+(cos(2*PI*60*ConT)*(0.8660254037844386))-sin(2*PI*60*ConT))));
+	sprintf(text2,"%5.4f",InversorA/220.0);
 	strcat(text2,"\t");
 	sprintf(text3,"%5.4f",(sin(2*PI*60*ConT)*0.5)+(cos(2*PI*60*ConT)*(0.8660254037844386))-sin(2*PI*60*ConT));
 	strcat(text3,"\t");
@@ -540,8 +579,10 @@ void out(){
 	strcat(text8,"\t");
 	sprintf(text9,"%5.4f",InversorC);
 	strcat(text9,"\n");
-	if (ConT<0.016){ConT+=(0.001/16.0);}
+	if (ConT<0.016){ConT+=(0.001/10.0);}//ajustar con el tiempo real
 	else {ConT=0;}
+	if (ConT2<0.016){ConT2+=(0.001/10.0);}//ajustar con el tiempo real
+	else {ConT2=0;}
 	//if (cont<100){cont+=1;}
 	//else {cont=0;}
 
