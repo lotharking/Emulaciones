@@ -75,13 +75,13 @@ double coseFc[101]= {-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18
 int cont = 0;
 double Ws= 2* PI * 60;
 double SumaVD = 0;
-double InContrVD1 = 1;
-double OutContrVD1 = 1;
+double InContrVD1 = 0;
+double OutContrVD1 = 0;
 double SumaVQ = 1;
-double InContrVQ1 = 1;
-double OutContrVQ1 = 1;
-double VoRef = 220;
-double Vod = 220;
+double InContrVQ1 = 0;
+double OutContrVQ1 = 0;
+double VoRef = 0;
+double Vod = 0;
 double Voq = 0;
 double Vo0 = 0;
 double Iinvd = 0;
@@ -120,21 +120,23 @@ double IoutInversorA = 0, IoutInversorB = 0, IoutInversorC = 0;
 double ConT = 0,ConT2 = 0, CruceXCero = 0, InvAnterior = 1;
 
 //Control inversor
-double InCont1=1,OutCont1=1, Ref=1, Suma=1;
+double InCont1=0,OutCont1=0, Ref=1, Suma=1;
 
 //otras variables
 double acumVeloc=1;
 int bits= 0;
 FILE* fichero;
-char text1[20],text2[20],text3[20],text4[20],text5[20],text6[20],text7[20],text8[20],text9[20];
+char text1[20],text2[20],text3[20],text4[20],text5[20],text6[20],text7[20],text8[20],text9[20],text10[20],text11[20],text12[20],text13[20];
+char text14[20],text15[20],text16[20],text17[20],text18[20],text19[20],text20[20],text21[20],text22[20],text23[20],text24[20],text25[20];
+char text26[20],text27[20],text28[20],text29[20];
 char buffer[8],read_buffer[9];
 int bytes_read = 0;
 int fd;
 int Vrio_char;
 
 //Parametros integral
-double IntIn1 = 1;
-double IntOut1 = 1;
+double IntIn1 = 0;
+double IntOut1 = 0;
 
 static inline void tsnorm(struct timespec *ts)
 {
@@ -230,7 +232,7 @@ double ControlVDQ(double SVDQ, double InCtrVDQ1, double OutCtrVDQ1)
 double ControlIDQ(double SIDQ, double InCtrIDQ1, double OutCtrIDQ1)
 {
 	double Vo=1;
-	Vo=(SIDQ * 0.5) - (0.495 * InCtrIDQ1) + (OutCtrIDQ1);
+	Vo=(SIDQ * 5) - (4.99 * InCtrIDQ1) + (OutCtrIDQ1);
 	return Vo;
 }
 
@@ -406,10 +408,8 @@ void out(){
 	OutContrVQ1 = ContrVoq;
 	
 	//Desacople de tensión
-	DesDinVD = 5.5 - (Cinv * Voq * Ws);
-	DesDinVQ = -0.8294 + (Cinv * Vod * Ws);
-	//DesDinVD = ContrVod - (Cinv * Voq * Ws);
-	//DesDinVQ = ContrVoq + (Cinv * Vod * Ws);
+	DesDinVD = ContrVod - (Cinv * Voq * Ws);
+	DesDinVQ = ContrVoq + (Cinv * Vod * Ws);
 	
 	//Control de corriente
 	SumaID = DesDinVD - Iinvd;
@@ -436,9 +436,9 @@ void out(){
 	else {Mq = Mq;}
 	
 	//Generación MABC
-	//MA = PrimeraABC(0.7160, 0.1856, 0);
-	//MB = SegundaABC(0.7160, 0.1856, 0);
-	//MC = TerceraABC(0.7160, 0.1856, 0);
+	//MA = PrimeraABC(0.7098, 0.1856, 0);
+	//MB = SegundaABC(0.7098, 0.1856, 0);
+	//MC = TerceraABC(0.7098, 0.1856, 0);
 	MA = PrimeraABC(Md, Mq, 0);
 	MB = SegundaABC(Md, Mq, 0);
 	MC = TerceraABC(Md, Mq, 0);
@@ -487,7 +487,7 @@ void out(){
 	//Prueba
 	if (InversorA>=0 && InvAnterior<0){CruceXCero=1;}
 	else {CruceXCero=0;}
-	if (CruceXCero == 1){ConT2 = 0.000;}
+	//if (CruceXCero == 1){ConT2 = 0.000;}
 	//else {ConT += 0.001;}
 	
 	//Tensión y corriente Inversor DQ
@@ -535,16 +535,18 @@ void out(){
 	//printf("\n CONVERSOR: %f",DcVo);//Tension en DCSumaVD
 	//printf("\n SUMVD: %f",SumaVD);
 	//printf("\n SUMVD: %f",SumaVQ);
-	//printf("\n RCURRENT: %f",DesDinVD);
-	//printf("\n RCURRENT: %f",DesDinVQ);
+	//printf("\n ContrVod: %f",ContrVod);
+	//printf("\n ContrVoq: %f",ContrVoq);
+	//printf("\n DesDinVD: %f",DesDinVD);
+	//printf("\n DesDinVQ: %f",DesDinVQ);
 	//printf("\n SUMVD: %f",SumaID);
 	//printf("\n SUMVQ: %f",SumaIQ);
-	//printf("\n RCURRENTD: %f",DesDinID);
-	//printf("\n RCURRENTD: %f",DesDinIQ);
 	//printf("\n ContrIod: %f",ContrIod);
 	//printf("\n ContrIoq: %f",ContrIoq);
-	printf("\n Md: %f",Md);
-	printf("\n Mq: %f",Mq);
+	//printf("\n DesDinID: %f",DesDinID);
+	//printf("\n DesDinIQ: %f",DesDinIQ);
+	//printf("\n Md: %f",Md);
+	//printf("\n Mq: %f",Mq);
 	//printf("\n MA: %f",MA);
 	//printf("\n MB: %f",MB);
 	//printf("\n MC: %f",MC);
@@ -554,34 +556,76 @@ void out(){
 	//printf("\n IoutInversorA: %f",IoutInversorA);
 	//printf("\n IoutInversorB: %f",IoutInversorB);
 	//printf("\n IoutInversorC: %f",IoutInversorC);
-	//printf("\n Vod: %f",Vod);
-	//printf("\n Voq: %f",Voq);
+	printf("\n Vod: %f",Vod);
+	printf("\n Voq: %f",Voq);
+	printf("\n VoRef: %f",VoRef);
 	//printf("\n Iinvd: %f",Iinvd);
 	//printf("\n Iinvq: %f",Iinvq);
+	printf("\n ConT2: %f",ConT2);
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
-	sprintf(text1,"%5.4f",sin(2*PI*60*ConT));
+	sprintf(text1,"%5.4f",SumaVD);
 	strcat(text1,"\t");
-	sprintf(text2,"%5.4f",InversorA/220.0);
+	sprintf(text2,"%5.4f",SumaVQ);
 	strcat(text2,"\t");
-	sprintf(text3,"%5.4f",(sin(2*PI*60*ConT)*0.5)+(cos(2*PI*60*ConT)*(0.8660254037844386))-sin(2*PI*60*ConT));
+	sprintf(text3,"%5.4f",ContrVod);
 	strcat(text3,"\t");
-	sprintf(text4,"%5.4f",(2/3.0)*((InversorA*cos(2*PI*60*ConT))+InversorB*(sin(2*PI*60*ConT) * (sqrt(3)/2.0)-(cos(2*PI*60*ConT) * 0.5))+InversorC*(((cos(2*PI*60*ConT) * 0.5)-(sin(2*PI*60*ConT) * (sqrt(3)/2.0)))-(cos(2*PI*60*ConT)))));
+	sprintf(text4,"%5.4f",ContrVoq);
 	strcat(text4,"\t");
-	sprintf(text5,"%5.4f",sin(2*PI*60*ConT) * (sqrt(3)/2)-(cos(2*PI*60*ConT) * 0.5));
+	sprintf(text5,"%5.4f",DesDinVD);
 	strcat(text5,"\t");
-	sprintf(text6,"%5.4f",((cos(2*PI*60*ConT) * 0.5)-(sin(2*PI*60*ConT) * (sqrt(3)/2)))-(cos(2*PI*60*ConT)));
+	sprintf(text6,"%5.4f",DesDinVQ);
 	strcat(text6,"\t");
-	sprintf(text7,"%5.4f",InversorA);
+	sprintf(text7,"%5.4f",SumaID);
 	strcat(text7,"\t");
-	sprintf(text8,"%5.4f",InversorB);
+	sprintf(text8,"%5.4f",SumaIQ);
 	strcat(text8,"\t");
-	sprintf(text9,"%5.4f",InversorC);
-	strcat(text9,"\n");
+	sprintf(text9,"%5.4f",ContrIod);
+	strcat(text9,"\t");
+	sprintf(text10,"%5.4f",ContrIoq);
+	strcat(text10,"\t");
+	sprintf(text11,"%5.4f",DesDinID);
+	strcat(text11,"\t");
+	sprintf(text12,"%5.4f",DesDinIQ);
+	strcat(text12,"\t");
+	sprintf(text13,"%5.4f",Md);
+	strcat(text13,"\t");
+	sprintf(text14,"%5.4f",Mq);
+	strcat(text14,"\t");
+	sprintf(text15,"%5.4f",MA);
+	strcat(text15,"\t");
+	sprintf(text16,"%5.4f",MB);
+	strcat(text16,"\t");
+	sprintf(text17,"%5.4f",MC);
+	strcat(text17,"\t");
+	sprintf(text18,"%5.4f",InversorA);
+	strcat(text18,"\t");
+	sprintf(text19,"%5.4f",InversorB);
+	strcat(text19,"\t");
+	sprintf(text20,"%5.4f",InversorC);
+	strcat(text20,"\t");
+	sprintf(text21,"%5.4f",IoutInversorA);
+	strcat(text21,"\t");
+	sprintf(text22,"%5.4f",IoutInversorB);
+	strcat(text22,"\t");
+	sprintf(text23,"%5.4f",IoutInversorC);
+	strcat(text23,"\t");
+	sprintf(text24,"%5.4f",VoRef);
+	strcat(text24,"\t");
+	sprintf(text25,"%5.4f",Vod);
+	strcat(text25,"\t");
+	sprintf(text26,"%5.4f",Voq);
+	strcat(text26,"\t");
+	sprintf(text27,"%5.4f",Iinvd);
+	strcat(text27,"\t");
+	sprintf(text28,"%5.4f",Iinvq);
+	strcat(text28,"\t");
+	sprintf(text29,"%5.4f",ConT2);
+	strcat(text29,"\n");
 	if (ConT<0.016){ConT+=(0.001/10.0);}//ajustar con el tiempo real
 	else {ConT=0;}
-	if (ConT2<0.016){ConT2+=(0.001/10.0);}//ajustar con el tiempo real
+	if (ConT2<1){ConT2+=(0.001/10.0);}//ajustar con el tiempo real
 	else {ConT2=0;}
 	//if (cont<100){cont+=1;}
 	//else {cont=0;}
@@ -596,6 +640,26 @@ void out(){
 	fputs(text7,fichero);
 	fputs(text8,fichero);
 	fputs(text9,fichero);
+	fputs(text10,fichero);
+	fputs(text11,fichero);
+	fputs(text12,fichero);
+	fputs(text13,fichero);
+	fputs(text14,fichero);
+	fputs(text15,fichero);
+	fputs(text16,fichero);
+	fputs(text17,fichero);
+	fputs(text18,fichero);
+	fputs(text19,fichero);
+	fputs(text20,fichero);
+	fputs(text21,fichero);
+	fputs(text22,fichero);
+	fputs(text23,fichero);
+	fputs(text24,fichero);
+	fputs(text25,fichero);
+	fputs(text26,fichero);
+	fputs(text27,fichero);
+	fputs(text28,fichero);
+	fputs(text29,fichero);
 }
 int main(int argc,char** argv) {
 	//Time
