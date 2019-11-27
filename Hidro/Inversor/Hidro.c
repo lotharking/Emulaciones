@@ -77,7 +77,7 @@ double Ws= 2* PI * 60;
 double SumaVD = 0;
 double InContrVD1 = 0;
 double OutContrVD1 = 0;
-double SumaVQ = 1;
+double SumaVQ = 0;
 double InContrVQ1 = 0;
 double OutContrVQ1 = 0;
 double VoRef = 0;
@@ -90,10 +90,10 @@ double Iinv0 = 0;
 double Cinv = 0.00001;
 double Linv = 0.025;
 double Vg = 150;
-double ContrVod = 1;
-double ContrVoq = 1;
-double DesDinVD = 1;
-double DesDinVQ = 1;
+double ContrVod = 0;
+double ContrVoq = 0;
+double DesDinVD = 0;
+double DesDinVQ = 0;
 double SumaID = 0;
 double SumaIQ = 0;
 double InContrID1 = 0;
@@ -117,10 +117,10 @@ double RefIn1 = 0,RefOut1 = 0,RefIn2 = 0,RefOut2 = 0;
 double InversorA = 0, InversorB = 0, InversorC = 0;
 double IoutInversorA = 0, IoutInversorB = 0, IoutInversorC = 0;
 //double PruebaA = 0, PruebaB = 0, PruebaC = 0;
-double ConT = 0,ConT2 = 0, CruceXCero = 0, InvAnterior = 1;
+double ConT = 0,ConT2 = 0, CruceXCero = 0, InvAnterior = 0;
 
 //Control inversor
-double InCont1=0,OutCont1=0, Ref=1, Suma=1;
+//double InCont1=0,OutCont1=0, Ref=1, Suma=1;
 
 //otras variables
 double acumVeloc=1;
@@ -313,14 +313,21 @@ double Tercera0(double VA, double VB, double VC)
 
 double InversorSup(double in, double InvInS1,double InvInS2,double InvOutS1,double InvOutS2){
 	double Vo=1;
-	Vo=(0.01993*InvInS1)+(0.01993*InvInS2)+(1.96*InvOutS1)-(InvOutS2);
-	//Vo=(0.5*in)+(InvInS1)+(0.5*InvInS2)-(InvOutS2);
+	//Vo=(0.01993*InvInS1)+(0.01993*InvInS2)+(1.96*InvOutS1)-(InvOutS2);
+	//Vo=(0.009901*in)+(0.0198*InvInS1)+(0.009901*InvInS2)+(1.96*InvOutS1)-(InvOutS2);
+	//Vo=(0.006653*in)+(0.02656*InvInS1)+(0.006653*InvInS2)+(1.96*InvOutS1)-(InvOutS2);
+	Vo=(0.03973*InvInS1)+(1.96*InvOutS1)-(InvOutS2);
+	//Vo=(0.01993*InvInS1)+(0.01993*InvInS2)+(1.96*InvOutS1)-(InvOutS2);
 	return Vo;
 }   
 
 double InversorInf(double inI, double InvInI1,double InvInI2,double InvOutI1,double InvOutI2){
 	double Vo=1;
-	Vo=(-9.933*InvInI1)+(9.933*InvInI2)+(1.96*InvOutI1)-(InvOutI2);
+	//Vo=(-9.933*InvInI1)+(9.933*InvInI2)+(1.96*InvOutI1)-(InvOutI2);//ZOH
+	//Vo=(-4.95*inI)+(4.95*InvInI2)+(1.96*InvOutI1)-(InvOutI2);//TUSTIN--Funcionamiento bueno
+	//Vo=(-4.983*inI)+(4.983*InvInI2)+(1.96*InvOutI1)-(InvOutI2);//FOH
+	Vo=(-10*inI)+(9.801*InvInI1)+(1.96*InvOutI1)-(InvOutI2);//IMPULSE--Mejor funciona pero sigue teniendo error
+	//Vo=(-9.972*InvInI1)+(9.972*InvInI2)+(1.96*InvOutI1)-(InvOutI2);//Matched--Peor funcionamiento
 	return Vo;
 }
 
@@ -436,9 +443,9 @@ void out(){
 	else {Mq = Mq;}
 	
 	//Generación MABC
-	//MA = PrimeraABC(0.7098, 0.1856, 0);
-	//MB = SegundaABC(0.7098, 0.1856, 0);
-	//MC = TerceraABC(0.7098, 0.1856, 0);
+	//MA = PrimeraABC(0.7146, 0.1728, 0);
+	//MB = SegundaABC(0.7146, 0.1728, 0);
+	//MC = TerceraABC(0.7146, 0.1728, 0);
 	MA = PrimeraABC(Md, Mq, 0);
 	MB = SegundaABC(Md, Mq, 0);
 	MC = TerceraABC(Md, Mq, 0);
@@ -545,8 +552,8 @@ void out(){
 	//printf("\n ContrIoq: %f",ContrIoq);
 	//printf("\n DesDinID: %f",DesDinID);
 	//printf("\n DesDinIQ: %f",DesDinIQ);
-	//printf("\n Md: %f",Md);
-	//printf("\n Mq: %f",Mq);
+	printf("\n Md: %f",Md);
+	printf("\n Mq: %f",Mq);
 	//printf("\n MA: %f",MA);
 	//printf("\n MB: %f",MB);
 	//printf("\n MC: %f",MC);
@@ -559,8 +566,8 @@ void out(){
 	printf("\n Vod: %f",Vod);
 	printf("\n Voq: %f",Voq);
 	printf("\n VoRef: %f",VoRef);
-	//printf("\n Iinvd: %f",Iinvd);
-	//printf("\n Iinvq: %f",Iinvq);
+	printf("\n Iinvd: %f",Iinvd);
+	printf("\n Iinvq: %f",Iinvq);
 	printf("\n ConT2: %f",ConT2);
     printf("\n ------------------------");
 
@@ -623,7 +630,7 @@ void out(){
 	strcat(text28,"\t");
 	sprintf(text29,"%5.4f",ConT2);
 	strcat(text29,"\n");
-	if (ConT<0.016){ConT+=(0.001/10.0);}//ajustar con el tiempo real
+	if (ConT<1){ConT+=(0.001/10.0);}//ajustar con el tiempo real
 	else {ConT=0;}
 	if (ConT2<1){ConT2+=(0.001/10.0);}//ajustar con el tiempo real
 	else {ConT2=0;}
