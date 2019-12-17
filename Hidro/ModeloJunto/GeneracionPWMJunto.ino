@@ -17,6 +17,11 @@ bool pinra=false;
 bool bi1 = false, bi2 = false,bi3 = false, bi4 = false;
 int cont=0;
 char frst, scnd, thrd, frth;
+int sensor0;
+int sensor1;
+int sensor2;
+int sensor3;
+
 
 int dutycycle_156 [625] = {128, 129, 130, 130, 131, 132, 133, 134, 135, 135, 136, 137, 138, 139, 139, 140, 141, 142, 143, 144, 144, 145, 146, 147, 148, 148, 149, 150, 151,
                            152, 153, 153, 154, 155, 156, 157, 157, 158, 159, 160, 161, 162, 162, 163, 164, 165, 166, 167, 167, 168, 169, 170, 171, 171, 172, 173, 174, 175,
@@ -73,13 +78,13 @@ void sendToRasp() {
   memset(tramRasp,0,sizeof(tramRasp));
       //sprintf(tramRasp, "f%07de",i1);
       Serial.print('f');
-      Serial.print(i1);
+      Serial.print(sensor0);
       Serial.print(',');
-      Serial.print(i2);
+      Serial.print(sensor1);
       Serial.print(',');
-      Serial.print(i3);
+      Serial.print(sensor2);
       Serial.print(',');
-      Serial.print(i2);
+      Serial.print(sensor3);
       Serial.println('e');
       Serial.flush();  
 }
@@ -138,6 +143,10 @@ void receiveRaspData() {
 }
 
 void loop() {
+  sensor0 = analogRead(A0);
+  sensor1 = analogRead(A1);
+  sensor2 = analogRead(A2);
+  sensor3 = analogRead(A3);
 
   // Programa principal, se usarán directamente los registros de comparación porque es más rápido que usar las funciones propias de arduino.
   sendToRasp();

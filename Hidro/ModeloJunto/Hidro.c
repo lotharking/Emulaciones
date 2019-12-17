@@ -400,10 +400,10 @@ void out(){
             if(i==2){dato4=atoi(token);}
             i++;
         }
-    //printf("\n dato1: %d",dato1);
-    //printf("\n dato2: %d",dato2);
-    //printf("\n dato3: %d",dato3);
-    //printf("\n dato4: %d",dato4);
+    printf("\n dato1: %d",dato1);
+    printf("\n dato2: %d",dato2);
+    printf("\n dato3: %d",dato3);
+    printf("\n dato4: %d",dato4);
 	
 	//TURBINA DE RIO	
 	Planda=landa(acumVeloc,vrio,radio);
