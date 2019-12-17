@@ -129,16 +129,18 @@ double Pot3Phase = 0;
 
 //otras variables
 double acumVeloc=1;
-int bits= 0;
+int bits= 0,bits2= 0,bits3= 0;
 FILE* fichero;
 char text1[20],text2[20],text3[20],text4[20],text5[20],text6[20],text7[20],text8[20],text9[20],text10[20],text11[20],text12[20],text13[20];
 char text14[20],text15[20],text16[20],text17[20],text18[20],text19[20],text20[20],text21[20],text22[20],text23[20],text24[20],text25[20];
 char text26[20],text27[20],text28[20],text29[20];
-char buffer[8],read_buffer[9];
+char buffer[9],read_buffer[125],buffer2[9],buffer3[9],buffer4[16],buffer5[24],inputCharArray[125],inChar,delimitador[] = ",";
 int bytes_read = 0;
-int fd;
+int fd, i, j;
 int Vrio_char;
 double PSend;
+int dato1,dato2,dato3,dato4;
+bool stringComplete,conti;
 
 //Parametros integral
 double IntIn1 = 1;
@@ -360,26 +362,48 @@ double Filtro(double FilIn, double FilIn1,double FilIn2,double FilOut1,double Fi
 void out(){
 
 	//Lectura Vrio serial-- aqui lee la velocidad del rio
-
-	while(read_buffer[0]!='f' && read_buffer[8]!='e'){
-		bytes_read=read(fd,&read_buffer,9);
-		serialFlush(fd);
-		tcflush(fd,TCIOFLUSH);
-		Vrio_char=(read_buffer[4]-48)*1000;
-		Vrio_char+=(read_buffer[5]-48)*100;
-		Vrio_char+=(read_buffer[6]-48)*10;
-		Vrio_char+=(read_buffer[7]-48);
-		PSend=(Vrio_char);
-	}
-		read_buffer[0]='0';
-		read_buffer[1]='0';
-		read_buffer[2]='0';
-		read_buffer[3]='0';
-		read_buffer[4]='0';
-		read_buffer[5]='0';
-		read_buffer[6]='0';
-		read_buffer[7]='0';
-		read_buffer[8]='0';
+	
+	stringComplete = false;
+    conti = true;
+    serialFlush(fd);
+    
+    memset(inputCharArray, 0, sizeof(inputCharArray));
+	while (conti) {
+        //printf("Buscando new line\n");
+      inChar = serialGetchar(fd);
+      if (inChar == 'f') {
+        //printf("Primer new line\n");
+        j = 0;
+        while (!stringComplete) {
+          while (serialDataAvail (fd) > 0  && conti) {
+            inChar = serialGetchar(fd);
+            if (inChar == 'e') {
+              stringComplete = true;
+              conti = false;
+            } else {
+              inputCharArray[j] = inChar;
+              j++;
+            }
+          }
+        }
+      }
+     }
+    serialFlush(fd);
+    
+    i=0;
+    char *token = strtok(inputCharArray, delimitador);
+    dato1=atoi(token);
+    while(token != NULL){
+            token = strtok(NULL, delimitador);
+            if(i==0){dato2=atoi(token);}
+            if(i==1){dato3=atoi(token);}
+            if(i==2){dato4=atoi(token);}
+            i++;
+        }
+    //printf("\n dato1: %d",dato1);
+    //printf("\n dato2: %d",dato2);
+    //printf("\n dato3: %d",dato3);
+    //printf("\n dato4: %d",dato4);
 	
 	//TURBINA DE RIO	
 	Planda=landa(acumVeloc,vrio,radio);
@@ -471,39 +495,39 @@ void out(){
 	else {Mq = Mq;}
 	
 	//Generación MABC
-	//MA = PrimeraABC(0.7146, 0.1728, 0);
-	//MB = SegundaABC(0.7146, 0.1728, 0);
-	//MC = TerceraABC(0.7146, 0.1728, 0);
-	MA = PrimeraABC(Md, Mq, 0);
-	MB = SegundaABC(Md, Mq, 0);
-	MC = TerceraABC(Md, Mq, 0);
+	MA = PrimeraABC(0.7146, 0.1728, 0);
+	MB = SegundaABC(0.7146, 0.1728, 0);
+	MC = TerceraABC(0.7146, 0.1728, 0);
+	//MA = PrimeraABC(Md, Mq, 0);
+	//MB = SegundaABC(Md, Mq, 0);
+	//MC = TerceraABC(Md, Mq, 0);
 	
 	//Inversor
-	InvSupA = InversorSup(DcVo * MA,InvSupAIn1,InvSupAIn2,InvSupAOut1,InvSupAOut2);
+	InvSupA = InversorSup(300 * MA,InvSupAIn1,InvSupAIn2,InvSupAOut1,InvSupAOut2);
 	InvSupAOut2 = InvSupAOut1;
 	InvSupAIn2=InvSupAIn1;
 	InvSupAOut1=InvSupA;
-	InvSupAIn1=DcVo * MA;
+	InvSupAIn1=300 * MA;
 	InvInfA = InversorInf(IoutInversorA,InvInfAIn1,InvInfAIn2,InvInfAOut1,InvInfAOut2);
 	InvInfAOut2 = InvInfAOut1;
 	InvInfAIn2=InvInfAIn1;
 	InvInfAOut1=InvInfA;
 	InvInfAIn1=IoutInversorA;
-	InvSupB = InversorSup(DcVo * MB,InvSupBIn1,InvSupBIn2,InvSupBOut1,InvSupBOut2);
+	InvSupB = InversorSup(300 * MB,InvSupBIn1,InvSupBIn2,InvSupBOut1,InvSupBOut2);
 	InvSupBOut2 = InvSupBOut1;
 	InvSupBIn2=InvSupBIn1;
 	InvSupBOut1=InvSupB;
-	InvSupBIn1=DcVo * MB;
+	InvSupBIn1=300 * MB;
 	InvInfB = InversorInf(IoutInversorB,InvInfBIn1,InvInfBIn2,InvInfBOut1,InvInfBOut2);
 	InvInfBOut2 = InvInfBOut1;
 	InvInfBIn2=InvInfBIn1;
 	InvInfBOut1=InvInfB;
 	InvInfBIn1=IoutInversorB;
-	InvSupC = InversorSup(DcVo * MC,InvSupCIn1,InvSupCIn2,InvSupCOut1,InvSupCOut2);
+	InvSupC = InversorSup(300 * MC,InvSupCIn1,InvSupCIn2,InvSupCOut1,InvSupCOut2);
 	InvSupCOut2 = InvSupCOut1;
 	InvSupCIn2=InvSupCIn1;
 	InvSupCOut1=InvSupC;
-	InvSupCIn1=DcVo * MC;
+	InvSupCIn1=300 * MC;
 	InvInfC = InversorInf(IoutInversorC,InvInfCIn1,InvInfCIn2,InvInfCOut1,InvInfCOut2);
 	InvInfCOut2 = InvInfCOut1;
 	InvInfCIn2=InvInfCIn1;
@@ -557,24 +581,64 @@ void out(){
 	
 	
 	//Comuniacion Serial-- envio datos arduino
-	bits=(int) (((MA+2)*1000));//4095 para DAC
-	memset(buffer,0,sizeof(buffer));
-	sprintf(buffer,"v%07d\n",bits);
-	serialPuts(fd,buffer);
+	
+	bits =(int) (((MA+2)*1000));//4095 para DAC
+	bits2=(int) (((MB+2)*1000));//4095 para DAC
+	bits3=(int) (((MC+2)*1000));//4095 para DAC
+	
+	//memset(buffer,0,sizeof(buffer));
+	//memset(buffer2,0,sizeof(buffer2));
+	//memset(buffer3,0,sizeof(buffer3));
+	
+	memset(buffer5,0,sizeof(buffer5));
+	
+	//sprintf(buffer,"v%07d",bits);
+	//serialPuts(fd,buffer);
+	//serialFlush(fd);
+	//tcflush(fd,TCIOFLUSH);
+	//sprintf(buffer2,"w%07d",bits2);
+	//serialPuts(fd,buffer2);
+	//serialFlush(fd);
+	//tcflush(fd,TCIOFLUSH);
+	//sprintf(buffer3,"z%07d\n",bits3);
+	//serialPuts(fd,buffer3);
+	//serialFlush(fd);
+	//tcflush(fd,TCIOFLUSH);
+	
+	sprintf(buffer5,"v%07dw%07dz%07d\n",bits,bits2,bits3);
+	serialPuts(fd,buffer5);
 	serialFlush(fd);
 	tcflush(fd,TCIOFLUSH);
 
 	//impresion
-	//printf("\n Variable 1: %f",Plandai);
-	printf("\n Variable 2: %d",bits);
-	printf("\n PSend 3: %f",PSend);
-	//printf("\n Variable 4: %c",read_buffer[7]);
-	//printf("\n Variable: %f",Pcp);
-
+	//printf("\n Variable 2: %d",bits2);
+	//printf("\n PSend 3: %f",PSend);
+	//printf("\n Variable 0: %c",buffer5[0]);
+	//printf("\n Variable 4: %c",buffer5[1]);
+	//printf("\n Variable 4: %c",buffer5[2]);
+	//printf("\n Variable 4: %c",buffer5[3]);
+	//printf("\n Variable 4: %c",buffer5[4]);
+	//printf("\n Variable 4: %c",buffer5[5]);
+	//printf("\n Variable 4: %c",buffer5[6]);
+	//printf("\n Variable 4: %c",buffer5[7]);
+	//printf("\n Variable 8: %c",buffer5[8]);
+	//printf("\n Variable 4: %c",buffer5[9]);
+	//printf("\n Variable 4: %c",buffer5[10]);
+	//printf("\n Variable 4: %c",buffer5[11]);
+	//printf("\n Variable 4: %c",buffer5[12]);
+	//printf("\n Variable 4: %c",buffer5[13]);
+	//printf("\n Variable 4: %c",buffer5[14]);
+	//printf("\n Variable 4: %c",buffer5[15]);
+	//printf("\n Variable 16: %c",buffer5[16]);
+	//printf("\n Variable 4: %c",buffer5[17]);
+	//printf("\n Variable 4: %c",buffer5[18]);
+	//printf("\n Variable 4: %c",buffer5[19]);
+	//printf("\n Variable 4: %c",buffer5[20]);
+	//printf("\n Variable 4: %c",buffer5[21]);
+	//printf("\n Variable 4: %c",buffer5[22]);
+	//printf("\n Variable 23: %c",buffer5[23]);
+	//printf("\n Variable 4: %c",buffer5[24]);
 	//printf("\n VELOCIDAD: %f",vrio);
-	//printf("\n ANGULAR: %f",acumVeloc);
-	//printf("\n Dq: %f",Dq);
-
 	//printf("\n LANDA: %f",Planda);
 	//printf("\n LANDAI: %f",Plandai);
 	//printf("\n CP : %f",Pcp);
@@ -587,7 +651,7 @@ void out(){
 	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
 	//printf("\n CONVERSORSUP: %f",DcVoSup);
 	//printf("\n CONVERSORINF: %f",DcVoInf);
-	printf("\n CONVERSOR: %f",DcVo);
+	//printf("\n CONVERSOR: %f",DcVo);
 	//printf("\n SUMVD: %f",SumaVD);
 	//printf("\n SUMVD: %f",SumaVQ);
 	//printf("\n ContrVod: %f",ContrVod);
@@ -611,27 +675,27 @@ void out(){
 	//printf("\n IoutInversorA: %f",IoutInversorA);
 	//printf("\n IoutInversorB: %f",IoutInversorB);
 	//printf("\n IoutInversorC: %f",IoutInversorC);
-	printf("\n Vod: %f",Vod);
+	//printf("\n Vod: %f",Vod);
 	//printf("\n Voq: %f",Voq);
 	//printf("\n VoRef: %f",VoRef);
 	//printf("\n Iinvd: %f",Iinvd);
 	//printf("\n Iinvq: %f",Iinvq);
 	//printf("\n Pot3Phase: %f",Pot3Phase);
-	printf("\n ConT2: %f",ConT2);
+	//printf("\n ConT2: %f",ConT2);
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
-	sprintf(text1,"%5.4f",SumaVD);
+	sprintf(text1,"%5.4f",Planda);
 	strcat(text1,"\t");
-	sprintf(text2,"%5.4f",SumaVQ);
+	sprintf(text2,"%5.4f",Pcp);
 	strcat(text2,"\t");
-	sprintf(text3,"%5.4f",ContrVod);
+	sprintf(text3,"%5.4f",acumVeloc);
 	strcat(text3,"\t");
-	sprintf(text4,"%5.4f",ContrVoq);
+	sprintf(text4,"%5.4f",Vout);
 	strcat(text4,"\t");
-	sprintf(text5,"%5.4f",DesDinVD);
+	sprintf(text5,"%5.4f",DcVo);
 	strcat(text5,"\t");
-	sprintf(text6,"%5.4f",DesDinVQ);
+	sprintf(text6,"%5.4f",PSend);
 	strcat(text6,"\t");
 	sprintf(text7,"%5.4f",SumaID);
 	strcat(text7,"\t");
