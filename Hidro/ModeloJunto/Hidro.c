@@ -146,6 +146,11 @@ bool stringComplete,conti;
 double IntIn1 = 1;
 double IntOut1 = 1;
 
+extern int clock_nanosleep(clockid_t __clock_id, int __flags,
+      __const struct timespec *__req,
+      struct timespec *__rem);
+
+
 static inline void tsnorm(struct timespec *ts)
 {
    while (ts->tv_nsec >= NSEC_PER_SEC) {
@@ -153,10 +158,6 @@ static inline void tsnorm(struct timespec *ts)
       ts->tv_sec++;
    }
 }
-
-extern int clock_nanosleep(clockid_t __clock_id, int __flags,
-      __const struct timespec *__req,
-      struct timespec *__rem);
 
 
 double integral1(double IntIn1, double IntOut1){
@@ -289,15 +290,11 @@ double TerceraABC(double Vd, double Vq, double Vo)
 double PrimeraD(double VA, double VB, double VC)
 {
 	double V=1;
-	double w = 2*PI*60;
-	//double VH = 220*sin(w*ConT);	
-	//double VI = 220*sin(w*ConT- 2*PI/3);	
-	//double VJ = 220*sin(w*ConT+2*PI/3);	
+	double w = 2*PI*60;	
 	double V1 = sin(w*ConT);	
 	double V2 = -0.5*sin(w*ConT)-sqrt(3)/2.0*cos(w*ConT);
 	double V3 = -V2-sin(w*ConT);
 	V = (2/3.0)*(VA*V1+VB*V2+VC*V3);
-	//V = (2/3.0)*(VH*V1+VI*V2+VJ*V3);
 	return V;
 }
 
@@ -306,14 +303,10 @@ double SegundaQ(double VA, double VB, double VC)
 {
 	double V = 1;
 	double w = 2*PI*60;
-	//double VH = 220*sin(w*ConT);	
-	//double VI = 220*sin(w*ConT- 2*PI/3);	
-	//double VJ = 220*sin(w*ConT+2*PI/3);	
 	double V1 = cos(w*ConT);	
 	double V2 = sqrt(3)/2.0*sin(w*ConT)-0.5*cos(w*ConT);
 	double V3 = -V2-cos(w*ConT);
 	V = (2/3.0)*(VA*V1+VB*V2+VC*V3);
-	//V = (2/3.0)*(VH*V1+VI*V2+VJ*V3);
 	return V;
 }
 
@@ -363,49 +356,49 @@ void out(){
 
 	//Lectura Vrio serial-- aqui lee la velocidad del rio
 	
-	stringComplete = false;
-    conti = true;
-    serialFlush(fd);
+	//stringComplete = false;
+    //conti = true;
+    //serialFlush(fd);
     
-    memset(inputCharArray, 0, sizeof(inputCharArray));
-	while (conti) {
-        //printf("Buscando new line\n");
-      inChar = serialGetchar(fd);
-      if (inChar == 'f') {
-        //printf("Primer new line\n");
-        j = 0;
-        while (!stringComplete) {
-          while (serialDataAvail (fd) > 0  && conti) {
-            inChar = serialGetchar(fd);
-            if (inChar == 'e') {
-              stringComplete = true;
-              conti = false;
-            } else {
-              inputCharArray[j] = inChar;
-              j++;
-            }
-          }
-        }
-      }
-     }
-    serialFlush(fd);
+    //memset(inputCharArray, 0, sizeof(inputCharArray));
+	//while (conti) {
+        ////printf("Buscando new line\n");
+      //inChar = serialGetchar(fd);
+      //if (inChar == 'f') {
+        ////printf("Primer new line\n");
+        //j = 0;
+        //while (!stringComplete) {
+          //while (serialDataAvail (fd) > 0  && conti) {
+            //inChar = serialGetchar(fd);
+            //if (inChar == 'e') {
+              //stringComplete = true;
+              //conti = false;
+            //} else {
+              //inputCharArray[j] = inChar;
+              //j++;
+            //}
+          //}
+        //}
+      //}
+     //}
+    //serialFlush(fd);
     
-    i=0;
-    char *token = strtok(inputCharArray, delimitador);
-    dato1=atoi(token);
-    while(token != NULL){
-            token = strtok(NULL, delimitador);
-            if(i==0){dato2=atoi(token);}
-            if(i==1){dato3=atoi(token);}
-            if(i==2){dato4=atoi(token);}
-            i++;
-        }
-    printf("\n dato1: %d",dato1);
-    printf("\n dato2: %d",dato2);
-    printf("\n dato3: %d",dato3);
-    printf("\n dato4: %d",dato4);
+    //i=0;
+    //char *token = strtok(inputCharArray, delimitador);
+    //dato1=atoi(token);
+    //while(token != NULL){
+            //token = strtok(NULL, delimitador);
+            //if(i==0){dato2=atoi(token);}
+            //if(i==1){dato3=atoi(token);}
+            //if(i==2){dato4=atoi(token);}
+            //i++;
+        //}
+    //printf("\n dato1: %d",dato1);
+    //printf("\n dato2: %d",dato2);
+    //printf("\n dato3: %d",dato3);
+    //printf("\n dato4: %d",dato4);
 	
-	//TURBINA DE RIO	
+	////TURBINA DE RIO	
 	Planda=landa(acumVeloc,vrio,radio);
 	Plandai=landai(Planda,beta);
 	Pcp=cp(beta,Planda,Plandai);
@@ -420,7 +413,12 @@ void out(){
 	Vout= tension(Ri,Kb, Iout,acumVeloc);
 	
 	//CONVERSOR DC-DC
-	
+			
+	//Control
+	IConvEntrada = ControlDcIout(1 - Iout,ContIIn1,ContIOut1);
+	ContIOut1 = IConvEntrada;
+	ContIIn1 = 1 - Iout;
+			
 	//Conversor
 	Duty=(300/Vout);
 	if (Duty>1){Duty=1;}
@@ -429,11 +427,7 @@ void out(){
 	ConvInSup2 = ConvInSup1;
 	ConvOutSup1 = DcVoSup;
 	ConvInSup1 = 300;//Vout*Duty;
-		
-	//Control
-	IConvEntrada = ControlDcIout(1 - Iout,ContIIn1,ContIOut1);
-	ContIOut1 = IConvEntrada;
-	ContIIn1 = 1 - Iout;
+	
 	
 	DcVoInf = conversorInf(ConvInInf1,ConvInInf2,ConvOutInf1,ConvOutInf2);
 	ConvOutInf2 = ConvOutInf1;
@@ -441,16 +435,16 @@ void out(){
 	ConvOutInf1 = DcVoInf;
 	ConvInInf1 = IConvEntrada;
 	
-	DcVo = DcVoSup + DcVoInf + 0.01;
-	
+	DcVo = DcVoSup + DcVoInf + 0.001;
+			
 	Iout=Pot3Phase/(DcVo);//DcVo/225;
 	
 	
 	
-	Pelec=DcVo*Iout;
+	//Pelec=DcVo*Iout;
 	PTelec= Telec(Kp,Iout);
 	
-	//INVERSOR
+	////INVERSOR
 	//Referencia
 	VoRef = Referencia(220,RefIn1,RefIn2,RefOut1,RefOut2);
 	RefIn1 = 220;
@@ -495,39 +489,39 @@ void out(){
 	else {Mq = Mq;}
 	
 	//Generación MABC
-	MA = PrimeraABC(0.7146, 0.1728, 0);
-	MB = SegundaABC(0.7146, 0.1728, 0);
-	MC = TerceraABC(0.7146, 0.1728, 0);
-	//MA = PrimeraABC(Md, Mq, 0);
-	//MB = SegundaABC(Md, Mq, 0);
-	//MC = TerceraABC(Md, Mq, 0);
+	//MA = PrimeraABC(0.7146, 0.1728, 0);
+	//MB = SegundaABC(0.7146, 0.1728, 0);
+	//MC = TerceraABC(0.7146, 0.1728, 0);
+	MA = PrimeraABC(Md, Mq, 0);
+	MB = SegundaABC(Md, Mq, 0);
+	MC = TerceraABC(Md, Mq, 0);
 	
 	//Inversor
-	InvSupA = InversorSup(300 * MA,InvSupAIn1,InvSupAIn2,InvSupAOut1,InvSupAOut2);
+	InvSupA = InversorSup(DcVo * MA,InvSupAIn1,InvSupAIn2,InvSupAOut1,InvSupAOut2);
 	InvSupAOut2 = InvSupAOut1;
 	InvSupAIn2=InvSupAIn1;
 	InvSupAOut1=InvSupA;
-	InvSupAIn1=300 * MA;
+	InvSupAIn1=DcVo * MA;
 	InvInfA = InversorInf(IoutInversorA,InvInfAIn1,InvInfAIn2,InvInfAOut1,InvInfAOut2);
 	InvInfAOut2 = InvInfAOut1;
 	InvInfAIn2=InvInfAIn1;
 	InvInfAOut1=InvInfA;
 	InvInfAIn1=IoutInversorA;
-	InvSupB = InversorSup(300 * MB,InvSupBIn1,InvSupBIn2,InvSupBOut1,InvSupBOut2);
+	InvSupB = InversorSup(DcVo * MB,InvSupBIn1,InvSupBIn2,InvSupBOut1,InvSupBOut2);
 	InvSupBOut2 = InvSupBOut1;
 	InvSupBIn2=InvSupBIn1;
 	InvSupBOut1=InvSupB;
-	InvSupBIn1=300 * MB;
+	InvSupBIn1=DcVo * MB;
 	InvInfB = InversorInf(IoutInversorB,InvInfBIn1,InvInfBIn2,InvInfBOut1,InvInfBOut2);
 	InvInfBOut2 = InvInfBOut1;
 	InvInfBIn2=InvInfBIn1;
 	InvInfBOut1=InvInfB;
 	InvInfBIn1=IoutInversorB;
-	InvSupC = InversorSup(300 * MC,InvSupCIn1,InvSupCIn2,InvSupCOut1,InvSupCOut2);
+	InvSupC = InversorSup(DcVo * MC,InvSupCIn1,InvSupCIn2,InvSupCOut1,InvSupCOut2);
 	InvSupCOut2 = InvSupCOut1;
 	InvSupCIn2=InvSupCIn1;
 	InvSupCOut1=InvSupC;
-	InvSupCIn1=300 * MC;
+	InvSupCIn1=DcVo * MC;
 	InvInfC = InversorInf(IoutInversorC,InvInfCIn1,InvInfCIn2,InvInfCOut1,InvInfCOut2);
 	InvInfCOut2 = InvInfCOut1;
 	InvInfCIn2=InvInfCIn1;
@@ -539,12 +533,9 @@ void out(){
 	InversorA = InvSupA + InvInfA;
 	InversorB = InvSupB + InvInfB;
 	InversorC = InvSupC + InvInfC;
-	//InversorA = 220*sin(2*PI*60*ConT);
-	//InversorB = 220*sin(2*PI*60*ConT- (PI/2.0));
-	//InversorC = 220*sin(2*PI*60*ConT+ (PI/2.0));
-	IoutInversorA = InversorA/40.0;
-	IoutInversorB = InversorB/40.0;
-	IoutInversorC = InversorC/40.0;
+	IoutInversorA = InversorA/20.0;
+	IoutInversorB = InversorB/20.0;
+	IoutInversorC = InversorC/20.0;
 	
 	//Prueba
 	if (InversorA>=0 && InvAnterior<0){CruceXCero=1;}
@@ -556,21 +547,6 @@ void out(){
 	Vod = PrimeraD(InversorA, InversorB, InversorC);
 	Vo0 = Tercera0(InversorA, InversorB, InversorC);
 	Voq = SegundaQ(InversorA, InversorB, InversorC);
-	//Prueba
-	//VodAR[15] = VodPrueba;
-	//VoqAR[15] = VoqPrueba;
-	//Vod = 0;
-	//Voq = 0;
-	//for (int i = 0;i<16;i++){
-        //Vod += VodAR[i];
-        //Voq += VoqAR[i];
-		//}
-	//Vod = Vod / 16.0;
-	//Voq = Voq / 16.0;
-	//for (int i = 0;i<16;i++){
-		//VodAR[i-1] = VodAR[i];
-		//VoqAR[i-1] = VoqAR[i];
-		//}
 	
 	Iinvd = PrimeraD(IoutInversorA, IoutInversorB, IoutInversorC);
 	Iinvq = SegundaQ(IoutInversorA, IoutInversorB, IoutInversorC);
@@ -582,33 +558,16 @@ void out(){
 	
 	//Comuniacion Serial-- envio datos arduino
 	
-	bits =(int) (((MA+2)*1000));//4095 para DAC
-	bits2=(int) (((MB+2)*1000));//4095 para DAC
-	bits3=(int) (((MC+2)*1000));//4095 para DAC
+	//bits =(int) (((MA+2)*1000));//4095 para DAC
+	//bits2=(int) (((MB+2)*1000));//4095 para DAC
+	//bits3=(int) (((MC+2)*1000));//4095 para DAC
 	
-	//memset(buffer,0,sizeof(buffer));
-	//memset(buffer2,0,sizeof(buffer2));
-	//memset(buffer3,0,sizeof(buffer3));
+	//memset(buffer5,0,sizeof(buffer5));
 	
-	memset(buffer5,0,sizeof(buffer5));
-	
-	//sprintf(buffer,"v%07d",bits);
-	//serialPuts(fd,buffer);
+	//sprintf(buffer5,"v%07dw%07dz%07d\n",bits,bits2,bits3);
+	//serialPuts(fd,buffer5);
 	//serialFlush(fd);
 	//tcflush(fd,TCIOFLUSH);
-	//sprintf(buffer2,"w%07d",bits2);
-	//serialPuts(fd,buffer2);
-	//serialFlush(fd);
-	//tcflush(fd,TCIOFLUSH);
-	//sprintf(buffer3,"z%07d\n",bits3);
-	//serialPuts(fd,buffer3);
-	//serialFlush(fd);
-	//tcflush(fd,TCIOFLUSH);
-	
-	sprintf(buffer5,"v%07dw%07dz%07d\n",bits,bits2,bits3);
-	serialPuts(fd,buffer5);
-	serialFlush(fd);
-	tcflush(fd,TCIOFLUSH);
 
 	//impresion
 	//printf("\n Variable 2: %d",bits2);
@@ -647,11 +606,11 @@ void out(){
 	//printf("\n PARM: %f",PTmec);
 	//printf("\n ACEL: %f",acel);
 	//printf("\n VANGULAR: %f",acumVeloc);
-	//printf("\n TENSION: %f",Vout);
+	printf("\n TENSION: %f",Vout);
 	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
 	//printf("\n CONVERSORSUP: %f",DcVoSup);
 	//printf("\n CONVERSORINF: %f",DcVoInf);
-	//printf("\n CONVERSOR: %f",DcVo);
+	printf("\n CONVERSOR: %f",DcVo);
 	//printf("\n SUMVD: %f",SumaVD);
 	//printf("\n SUMVD: %f",SumaVQ);
 	//printf("\n ContrVod: %f",ContrVod);
@@ -664,7 +623,7 @@ void out(){
 	//printf("\n ContrIoq: %f",ContrIoq);
 	//printf("\n DesDinID: %f",DesDinID);
 	//printf("\n DesDinIQ: %f",DesDinIQ);
-	//printf("\n Md: %f",Md);
+	printf("\n Md: %f",Md);
 	//printf("\n Mq: %f",Mq);
 	//printf("\n MA: %f",MA);
 	//printf("\n MB: %f",MB);
@@ -675,13 +634,13 @@ void out(){
 	//printf("\n IoutInversorA: %f",IoutInversorA);
 	//printf("\n IoutInversorB: %f",IoutInversorB);
 	//printf("\n IoutInversorC: %f",IoutInversorC);
-	//printf("\n Vod: %f",Vod);
+	printf("\n Vod: %f",Vod);
 	//printf("\n Voq: %f",Voq);
 	//printf("\n VoRef: %f",VoRef);
 	//printf("\n Iinvd: %f",Iinvd);
 	//printf("\n Iinvq: %f",Iinvq);
 	//printf("\n Pot3Phase: %f",Pot3Phase);
-	//printf("\n ConT2: %f",ConT2);
+	printf("\n ConT2: %f",ConT2);
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
@@ -785,7 +744,7 @@ int main(int argc,char** argv) {
 	//Time
 	struct timespec t;
 	struct sched_param param;
-	int interval=4000000; //en nanoseg--4s--1000000000-->-2 ceros para 10ms
+	int interval=1000000; //en nanoseg--4s--1000000000-->-->1 ms pero o se observa bien debido a la comunicacion
 	
 	
 	if(argc>=2 && atoi(argv[1])>0)
@@ -806,11 +765,10 @@ int main(int argc,char** argv) {
    pinMode (2, OUTPUT) ;   
 	
 	
-	fd=serialOpen("/dev/ttyACM0",115200);
-	serialClose(fd);
-	fd=serialOpen("/dev/ttyACM0",115200);
-	
-	sleep(1);
+	//fd=serialOpen("/dev/ttyACM0",115200);
+	//serialClose(fd);
+	//fd=serialOpen("/dev/ttyACM0",115200);
+	//sleep(1);
 	
 	/* get current time */
  	clock_gettime(0,&t);
@@ -833,8 +791,10 @@ int main(int argc,char** argv) {
 	digitalWrite (2, estado) ; 	//pin 13 gpio readall
 	
 	fichero =fopen("graficoH.txt","a");
-	out();
+	out();		
 	fclose(fichero);
+	
+	
 	/* calculate next shot */
       t.tv_nsec+=interval;
       tsnorm(&t);
