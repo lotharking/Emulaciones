@@ -2,7 +2,7 @@
 
 
 int incomingByte = 0;
-int i1 = 0, i2 = 0, i3 = 0;
+double i1 = 0, i2 = 0, i3 = 0;
 int pb=0, qb=0, pd=0, qd=0;
 int flag=0;
 //int i3 = 0, vl = 0;
@@ -15,13 +15,14 @@ int pm, qm, vl, v2, v3,vl2, soc;
 //volatile boolean pinra = false;
 bool pinra=false;
 bool bi1 = false, bi2 = false,bi3 = false, bi4 = false;
-int cont=0;
 char frst, scnd, thrd, frth;
 int sensor0;
 int sensor1;
 int sensor2;
 int sensor3;
 
+double cont=0;
+double ma, mb, mc;
 
 int dutycycle_156 [625] = {128, 129, 130, 130, 131, 132, 133, 134, 135, 135, 136, 137, 138, 139, 139, 140, 141, 142, 143, 144, 144, 145, 146, 147, 148, 148, 149, 150, 151,
                            152, 153, 153, 154, 155, 156, 157, 157, 158, 159, 160, 161, 162, 162, 163, 164, 165, 166, 167, 167, 168, 169, 170, 171, 171, 172, 173, 174, 175,
@@ -57,21 +58,30 @@ void setup() {
   // Configuramos los pines de PWM como salidas
 
   Serial.begin(115200);
-  pinMode (3, OUTPUT);  // Conectado a transistor Q6. Par transistores para senoidal con fase 240
-  pinMode (5, OUTPUT);  // Conectado a transistor Q2. Par transistores para senoidal con fase 0
-  pinMode (6, OUTPUT);  // Conectado a transistor Q1. Par transistores para senoidal con fase 0
+//  pinMode (3, OUTPUT);  // Conectado a transistor Q6. Par transistores para senoidal con fase 240
+//  pinMode (5, OUTPUT);  // Conectado a transistor Q2. Par transistores para senoidal con fase 0
+//  pinMode (6, OUTPUT);  // Conectado a transistor Q1. Par transistores para senoidal con fase 0
   pinMode (9, OUTPUT);  // Conectado a transistor Q3. Par transistores para senoidal con fase 120
   pinMode (10, OUTPUT); // Conectado a transistor Q4. Par transistores para senoidal con fase 120
   pinMode (11, OUTPUT); // Conectado a transistor Q5. Par transistores para senoidal con fase 240
+  pinMode (13, OUTPUT);
   
   // Configuramos los timers mediante los registros de control.
   
-  TCCR0A = 0xA1; // Habilitamos las dos salidas en modo Phase-correct - 8 bits. Pre-escaler = 1. Salidas no invertidas.
+  TCCR0A = 0xA1;//A1 // Habilitamos las dos salidas en modo Phase-correct - 8 bits. Pre-escaler = 1. Salidas no invertidas.
   TCCR0B = 0xC1;
   TCCR1A = 0xA1; // Habilitamos las dos salidas en modo Phase-correct - 8 bits. Pre-escaler = 1. Salidas no invertidas.
   TCCR1B = 0xC1;
   TCCR2A = 0xA1; // Habilitamos las dos salidas en modo Phase-correct - 8 bits. Pre-escaler = 1. Salidas no invertidas.
   TCCR2B = 0xC1;
+
+
+  TCCR3A = 0;                        // El registro de control A queda todo en 0, pines OC1A y OC1B deshabilitados
+  TCCR3B = 0;                        //limpia el registrador
+  TCCR3B |= (1<<CS31);   // configura prescaler para 1024: CS12 = 1 e CS10 = 1
+ 
+   TCNT3 = 0xFF38;
+   TIMSK3 |= (1 << TOIE3);
 }
 
 void sendToRasp() {
@@ -88,25 +98,6 @@ void sendToRasp() {
       Serial.println('e');
       Serial.flush();  
 }
-
-//void receiveRaspData() {//v0001500w0002000z0002500\n
-//  memset(&aa,0,sizeof(aa));
-//  while (Serial.available() > 0) {
-//    aa = Serial.read();  
-//    a += aa;
-//    if (aa == '\n') {
-//      frst = a.charAt(0);
-//      if (frst == 'v') {
-//        flag=1;
-//        svl= a.substring(1, 8);        
-//        vl = svl.toInt();
-//        a = "";
-//      }
-//      Serial.flush();
-//      a = "";
-//    }    
-//  }
-//}
 
 void receiveRaspData() {
   memset(&aa,0,sizeof(aa));
@@ -142,66 +133,68 @@ void receiveRaspData() {
   }
 }
 
+double PrimeraABC(double Vd, double Vq, double ConT)
+{
+  double V=1;
+  double w = 2*PI*60;
+  double V1 = sin(w*ConT);
+  double V2 = cos(w*ConT);
+  V = (Vd * V1) + (Vq * V2);
+  return V;
+}
+
+double SegundaABC(double Vd, double Vq, double ConT)
+{
+  double V=1;
+  double w = 2*PI*60;
+  double V1 = -(sin(w*ConT)* 0.5)-(cos(w*ConT) * (sqrt(3)/2));
+  double V2 = -(cos(w*ConT) * 0.5)+(sin(w*ConT) * (sqrt(3)/2));
+  V = (Vd * V1)+ (Vq * V2);
+  return V;
+}
+
+double TerceraABC(double Vd, double Vq, double ConT)
+{
+  double V=1;
+  double w = 2*PI*60;
+  double V1 = -(-(sin(w*ConT)* 0.5)-(cos(w*ConT) * (sqrt(3)/2)))-(sin(w*ConT));
+  double V2 = -(-(cos(w*ConT) * 0.5)+(sin(w*ConT) * (sqrt(3)/2)))-(cos(w*ConT));
+  V = (Vd * V1) + (Vq * V2);
+  return V;
+}
+
+
 void loop() {
-  sensor0 = analogRead(A0);
-  sensor1 = analogRead(A1);
-  sensor2 = analogRead(A2);
-  sensor3 = analogRead(A3);
-
-  // Programa principal, se usarán directamente los registros de comparación porque es más rápido que usar las funciones propias de arduino.
-  sendToRasp();
+//  sensor0 = analogRead(A0);
+//  sensor1 = analogRead(A1);
+//  sensor2 = analogRead(A2);
+//  sensor3 = analogRead(A3);
+//
+//  sendToRasp();
   receiveRaspData();
-  //Serial.println(vl);
-  i1 = int((((int(vl)-1000)*0.128)));
-  i2 = int((((int(v2)-1000)*0.128)));
-  i3 = int((((int(v3)-1000)*0.128)));
-  //Serial.println(vl);
-  OCR0A = i2;    // Registro de comparación para pin A del timer 0. Genera la PWM para Q1.
+//  //Serial.println(vl);
+  i1 = ((((int(vl)/1000.0)-1)));//v0001500w0001200z0001000
+  i2 = ((((int(v2)/1000.0)-1)));
+  i3 = ((((int(v3)/1000.0)-1)));
+  ma=127*(PrimeraABC(i1,i2,cont)+1);
+  mb=127*(SegundaABC(i1,i2,cont)+1);
+  mc=127*(TerceraABC(i1,i2,cont)+1);
+  //Serial.println(ma,4);
 
-  /* Este es un retardo de 4.875 us utilizado para crear un tiempo muerto entre pares de transistores y evitar cortocircuitos en los mismos.
-     Demostración: (1+1+(1+2)*25+1)/16000000 = 4.875 us*/
+}
 
-//  asm volatile (
-//        "clr r16 \n"       // 1 ciclo de reloj.
-//        "ldi r16, 0x14 \n" // 1 ciclo de reloj. 26 vueltas cargadas.
-//        "1: dec r16 \n"    // 1 ciclo de reloj
-//        "brne 1b  \n"      // 2 ciclos de reloj para retornar y 1 para salir
-//      );
-      
-   OCR0B = i2;    // Registro de comparación para pin B del timer 0. Genera la PWM para Q2.
-   OCR1A = i2;  // Registro de comparación para pin A del timer 1. Genera la PWM para Q3.
+ISR(TIMER3_OVF_vect)                              //interrupcion del TIMER1 
+{
+  TCNT3 = 0xFF38;  
+  digitalWrite(13,HIGH);
+  OCR0A = ma;
+  OCR0B = ma;
+  OCR1A = mb;
+  OCR1B = mb;
+  OCR2A = mc;
+  OCR2B = mc;
+  if ( cont < 0.017 )   { cont+=0.0001; }   else { cont = 0.0; }  
   
-  // Retardo 4.875 us.
+  digitalWrite(13,LOW);
   
-//   asm volatile (
-//      "clr r16 \n"       // 1 ciclo de reloj.
-//      "ldi r16, 0x14 \n" // 1 ciclo de reloj. 26 vueltas cargadas.
-//      "1: dec r16 \n"    // 1 ciclo de reloj
-//      "brne 1b  \n"      // 2 ciclos de reloj para retornar y 1 para salir
-//    );
-    
-   OCR1B = i3;  // Pin B del timer 1. Genera la PWM para Q4
-   
-   OCR2A = i1;//puntero_sin240;  // Pin A del timer 2. Genera la PWM para Q5
-   
-   
-   // Retardo 4.875 us.
-    
-//   asm volatile (
-//      "clr r16 \n"       // 1 ciclo de reloj
-//      "ldi r16, 0x14 \n" // 1 ciclo de reloj. 26 vueltas cargadas.
-//      "1: dec r16 \n"    // 1 ciclo de reloj
-//      "brne 1b  \n"      // 2 ciclos de reloj para retornar y 1 para salir
-//    );
-    
-    OCR2B = i2;  // Registro de comparación para pin B del timer 2. Genera la PWM para Q6
-  
-  /////-------------------Falta el retardo de 32 us---------------------------------------/////
-
-  // Ahora establecemos las condiciones para moverse por la tabla de valores y volver al comienzo una vez completado un período de señal.
-  
-//    if ( puntero_sin0++ < 625 )   { puntero_sin0++; }   else { puntero_sin0 = 0; }   // Si no se ha llegado al final de la tabla, avanza. Si se ha llegado, vuelve a 0.
-//    if ( puntero_sin120++ < 625 ) { puntero_sin120++; } else { puntero_sin120 = 0; } // Si no se ha llegado al final de la tabla, avanza. Si se ha llegado, vuelve a 0.
-//    if ( puntero_sin240++ < 625 ) { puntero_sin240++; } else { puntero_sin240 = 0; } // Si no se ha llegado al final de la tabla, avanza. Si se ha llegado, vuelve a 0.
-    
 }
