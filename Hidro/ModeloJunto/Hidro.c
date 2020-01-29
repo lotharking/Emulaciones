@@ -61,7 +61,7 @@ double ConvInSup1=0, ConvInSup2=0, ConvOutSup1=0,ConvOutSup2=0;
 double ConvInInf1=0, ConvInInf2=0, ConvOutInf1=0,ConvOutInf2=0;
 double DcVo=0, DcVoSup = 0, DcVoInf = 0, Duty = 1;
 double ContIIn = 0, ContIIn1 = 0, ContIIn2 = 0, ContIOut1 = 0, ContIOut2 = 0;
-double IConvEntrada = 0;
+double VoContrEntrada = 0,ContrDcVo = 0;
 
 //Conversor corrriente
 double DI1=1, DI2=1, I1=1,I2=1;
@@ -216,21 +216,21 @@ double tension(double Ri,double Kb,double Iout,double vel){
 	return v;
 }
 //Conversor DC-DC
-double conversorSup(double ConvInS1,double ConvInS2,double ConvOutS1,double ConvOutS2){
+double conversorSup(double ConvIn, double ConvInS1,double ConvInS2,double ConvOutS1,double ConvOutS2){
 	double Vo=1;
-	Vo=(0.02833*ConvInS1)+(0.02833*ConvInS2)+(1.943*ConvOutS1)-(ConvOutS2);
+	Vo=(0.014*ConvIn)+(0.02801*ConvInS1)+(0.014*ConvInS2)+(1.94*ConvOutS1)-(0.9961*ConvOutS2);
 	return Vo;
 }
 
-double conversorInf(double ConvInI1,double ConvInI2,double ConvOutI1,double ConvOutI2){
+double conversorInf(double ConvIn,double ConvInI2,double ConvOutI1,double ConvOutI2){
 	double Vo=1;
-	Vo=(-1.189*ConvInI1)+(1.189*ConvInI2)+(1.943*ConvOutI1)-(ConvOutI2);
+	Vo=(0.001969*ConvIn)-(0.001969*ConvInI2)+(1.94*ConvOutI1)-(0.9961*ConvOutI2);
 	return Vo;
 }   
 
-double ControlDcIout(double ContIIn, double ContIIn1,double ContIOut1){
+double ControlDcVo(double ContIIn, double ContIIn1,double ContIOut1){
 	double Vo=1;
-	Vo=(30*ContIIn)+(-29.99*ContIIn1)+(ContIOut1);
+	Vo=(0.000865*ContIIn)+(0.000865*ContIIn1)+(ContIOut1);
 	return Vo;
 }
 
@@ -414,30 +414,36 @@ void out(){
 	
 	//CONVERSOR DC-DC
 			
-	//Control
-	IConvEntrada = ControlDcIout(1 - Iout,ContIIn1,ContIOut1);
-	ContIOut1 = IConvEntrada;
-	ContIIn1 = 1 - Iout;
+	
 			
-	//Conversor
+	//Entrada conversor
 	Duty=(300/Vout);
 	if (Duty>1){Duty=1;}
-	DcVoSup =  conversorSup(ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
+	ContrDcVo=DcVo/Vout;
+	
+	//Control
+	VoContrEntrada = ControlDcVo(Duty - ContrDcVo,ContIIn1,ContIOut1);
+	ContIOut1 = VoContrEntrada;
+	ContIIn1 = Duty - ContrDcVo;
+	
+	//Conversor
+	DcVoSup =  conversorSup(VoContrEntrada,ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
 	ConvOutSup2 = ConvOutSup1;
 	ConvInSup2 = ConvInSup1;
 	ConvOutSup1 = DcVoSup;
-	ConvInSup1 = 300;//Vout*Duty;
+	ConvInSup1 = VoContrEntrada*Vout;
 	
 	
-	DcVoInf = conversorInf(ConvInInf1,ConvInInf2,ConvOutInf1,ConvOutInf2);
+	DcVoInf = conversorInf(Iout,ConvInInf2,ConvOutInf1,ConvOutInf2);
 	ConvOutInf2 = ConvOutInf1;
 	ConvInInf2 = ConvInInf1;
 	ConvOutInf1 = DcVoInf;
-	ConvInInf1 = IConvEntrada;
+	ConvInInf1 = Iout;
 	
 	DcVo = DcVoSup + DcVoInf + 0.001;
 			
 	Iout=Pot3Phase/(DcVo);//DcVo/225;
+	if (Iout>15){Iout=15;}
 	
 	
 	
@@ -446,8 +452,8 @@ void out(){
 	
 	////INVERSOR
 	//Referencia
-	VoRef = Referencia(220,RefIn1,RefIn2,RefOut1,RefOut2);
-	RefIn1 = 220;
+	VoRef = Referencia(180,RefIn1,RefIn2,RefOut1,RefOut2);
+	RefIn1 = 180;
 	RefOut1 = VoRef;
 	
 	//Control de tensión
@@ -533,9 +539,9 @@ void out(){
 	InversorA = InvSupA + InvInfA;
 	InversorB = InvSupB + InvInfB;
 	InversorC = InvSupC + InvInfC;
-	IoutInversorA = InversorA/20.0;
-	IoutInversorB = InversorB/20.0;
-	IoutInversorC = InversorC/20.0;
+	IoutInversorA = InversorA/15.0;
+	IoutInversorB = InversorB/15.0;
+	IoutInversorC = InversorC/15.0;
 	
 	//Prueba
 	if (InversorA>=0 && InvAnterior<0){CruceXCero=1;}
@@ -553,21 +559,21 @@ void out(){
 	Iinv0 = Tercera0(IoutInversorA, IoutInversorB, IoutInversorC);
 	
 	//Potencia trifasica
-	Pot3Phase = (1/2.0)*(InversorA*IoutInversorA+InversorB*IoutInversorB+InversorC*IoutInversorC);
-	
+	Pot3Phase = (InversorA*IoutInversorA+InversorB*IoutInversorB+InversorC*IoutInversorC);
+	if (Pot3Phase>4000) {Pot3Phase=4000;}
 	
 	//Comuniacion Serial-- envio datos arduino
 	
-	//bits =(int) (((MA+2)*1000));//4095 para DAC
-	//bits2=(int) (((MB+2)*1000));//4095 para DAC
-	//bits3=(int) (((MC+2)*1000));//4095 para DAC
+	bits =(int) (((Md+1)*1000));//4095 para DAC
+	bits2=(int) (((Mq+1)*1000));//4095 para DAC
+	bits3=(int) (((MC+2)*1000));//4095 para DAC
 	
-	//memset(buffer5,0,sizeof(buffer5));
+	memset(buffer5,0,sizeof(buffer5));
 	
-	//sprintf(buffer5,"v%07dw%07dz%07d\n",bits,bits2,bits3);
-	//serialPuts(fd,buffer5);
-	//serialFlush(fd);
-	//tcflush(fd,TCIOFLUSH);
+	sprintf(buffer5,"v%07dw%07dz%07d\n",bits,bits2,bits3);
+	serialPuts(fd,buffer5);
+	serialFlush(fd);
+	tcflush(fd,TCIOFLUSH);
 
 	//impresion
 	//printf("\n Variable 2: %d",bits2);
@@ -606,7 +612,7 @@ void out(){
 	//printf("\n PARM: %f",PTmec);
 	//printf("\n ACEL: %f",acel);
 	//printf("\n VANGULAR: %f",acumVeloc);
-	printf("\n TENSION: %f",Vout);
+	//printf("\n TENSION: %f",Vout);
 	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
 	//printf("\n CONVERSORSUP: %f",DcVoSup);
 	//printf("\n CONVERSORINF: %f",DcVoInf);
@@ -624,7 +630,7 @@ void out(){
 	//printf("\n DesDinID: %f",DesDinID);
 	//printf("\n DesDinIQ: %f",DesDinIQ);
 	printf("\n Md: %f",Md);
-	//printf("\n Mq: %f",Mq);
+	printf("\n Mq: %f",Mq);
 	//printf("\n MA: %f",MA);
 	//printf("\n MB: %f",MB);
 	//printf("\n MC: %f",MC);
@@ -634,13 +640,13 @@ void out(){
 	//printf("\n IoutInversorA: %f",IoutInversorA);
 	//printf("\n IoutInversorB: %f",IoutInversorB);
 	//printf("\n IoutInversorC: %f",IoutInversorC);
-	printf("\n Vod: %f",Vod);
+	//printf("\n Vod: %f",Vod);
 	//printf("\n Voq: %f",Voq);
 	//printf("\n VoRef: %f",VoRef);
 	//printf("\n Iinvd: %f",Iinvd);
 	//printf("\n Iinvq: %f",Iinvq);
-	//printf("\n Pot3Phase: %f",Pot3Phase);
-	printf("\n ConT2: %f",ConT2);
+	printf("\n Pot3Phase: %f",Pot3Phase);
+	//printf("\n ConT2: %f",ConT2);
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
