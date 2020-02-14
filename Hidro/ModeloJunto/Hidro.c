@@ -17,6 +17,7 @@
 #include <stdbool.h> 
 //#include <pthread.h>
 #include <semaphore.h>
+#include <wiringPiSPI.h>
 
 const int minutes = 60;
 const int seconds = 1;
@@ -29,8 +30,8 @@ const int seconds = 1;
 int estado=0;
 
 //Parametros mecanicos
-double D=1;
-double radio=0.5;
+double D=1.5;
+double radio=0.75;
 double beta=0;
 double Tfric=0;
 double iner = 0.00161919; //50;//acomodar aqui(aun no se que pasa)-->efectos de modelado
@@ -52,7 +53,6 @@ double Kb=6.2;
 double Bi=0.1;
 double Vout;
 double Iout=0;
-double Rout=25;
 double PTelec=0;
 double Pelec=0;
 
@@ -68,12 +68,6 @@ double DI1=1, DI2=1, I1=1,I2=1;
 
 
 //Inversor
-double senFa[101]=  {0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0};
-double coseFa[101]= {1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1};
-double senFb[101]=  {0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8};
-double coseFb[101]= {-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48};
-double senFc[101]=  {-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48,-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96};
-double coseFc[101]= {-0.42,-0.36,-0.3,-0.24,-0.18,-0.12,-0.06,0,0,0.06,0.12,0.18,0.24,0.3,0.36,0.42,0.48,0.54,0.58,0.64,0.68,0.72,0.78,0.8,0.84,0.88,0.9,0.92,0.96,0.96,0.98,1,1,1,1,1,0.98,0.96,0.96,0.92,0.9,0.88,0.84,0.8,0.78,0.72,0.68,0.64,0.58,0.54,0.48,0.42,0.36,0.3,0.24,0.18,0.12,0.06,0,-0.06,-0.12,-0.18,-0.24,-0.3,-0.36,-0.42,-0.48,-0.54,-0.58,-0.64,-0.68,-0.72,-0.78,-0.8,-0.84,-0.88,-0.9,-0.92,-0.96,-0.96,-0.98,-1,-1,-1,-1,-1,-0.98,-0.96,-0.96,-0.92,-0.9,-0.88,-0.84,-0.8,-0.78,-0.72,-0.68,-0.64,-0.58,-0.54,-0.48};
 int cont = 0;
 double Ws= 2* PI * 60;
 double SumaVD = 0;
@@ -146,6 +140,7 @@ bool stringComplete,conti;
 double IntIn1 = 1;
 double IntOut1 = 1;
 
+
 extern int clock_nanosleep(clockid_t __clock_id, int __flags,
       __const struct timespec *__req,
       struct timespec *__rem);
@@ -190,8 +185,8 @@ double potencia (double cp,double rad, double vrio){
 	double Ar;
 	double Po;
 
-	Ar = ((PI*(pow(1,2)))/4);
-	Po = (rad*1000*Ar*cp*(pow(vrio,3)));
+	Ar = ((PI*(pow(rad,2))));
+	Po = 0.5*(rad*1000*Ar*cp*(pow(vrio,3)));
 
 	return Po;
 }
@@ -210,7 +205,7 @@ double aceleracion(double Tmec,double Telect, double Tfric, double iner, double 
 }
 //Generador
 double tension(double Ri,double Kb,double Iout,double vel){
-	double w=Kb*vel;
+	double w=Kb*vel*1.6;
 	double w1=Ri*Iout;
 	double v=w+w1;
 	return v;
@@ -412,6 +407,9 @@ void out(){
 
 	Vout= tension(Ri,Kb, Iout,acumVeloc);
 	
+	//Par electrico
+	PTelec= Telec(Kp,Iout);
+	
 	//CONVERSOR DC-DC
 			
 	
@@ -446,9 +444,6 @@ void out(){
 	if (Iout>15){Iout=15;}
 	
 	
-	
-	//Pelec=DcVo*Iout;
-	PTelec= Telec(Kp,Iout);
 	
 	////INVERSOR
 	//Referencia
@@ -535,19 +530,13 @@ void out(){
 	InvInfCIn1=IoutInversorC;
 	
 	//Tensión y corriente Inversor trifasica
-	InvAnterior = InversorA;
 	InversorA = InvSupA + InvInfA;
 	InversorB = InvSupB + InvInfB;
 	InversorC = InvSupC + InvInfC;
-	IoutInversorA = InversorA/15.0;
-	IoutInversorB = InversorB/15.0;
-	IoutInversorC = InversorC/15.0;
+	IoutInversorA = InversorA/20.0;
+	IoutInversorB = InversorB/20.0;
+	IoutInversorC = InversorC/20.0;
 	
-	//Prueba
-	if (InversorA>=0 && InvAnterior<0){CruceXCero=1;}
-	else {CruceXCero=0;}
-	//if (CruceXCero == 1){ConT2 = 0.000;}
-	//else {ConT += 0.001;}
 	
 	//Tensión y corriente Inversor DQ
 	Vod = PrimeraD(InversorA, InversorB, InversorC);
@@ -561,6 +550,7 @@ void out(){
 	//Potencia trifasica
 	Pot3Phase = (InversorA*IoutInversorA+InversorB*IoutInversorB+InversorC*IoutInversorC);
 	if (Pot3Phase>4000) {Pot3Phase=4000;}
+	
 	
 	//Comuniacion Serial-- envio datos arduino
 	
@@ -579,30 +569,6 @@ void out(){
 	//printf("\n Variable 2: %d",bits2);
 	//printf("\n PSend 3: %f",PSend);
 	//printf("\n Variable 0: %c",buffer5[0]);
-	//printf("\n Variable 4: %c",buffer5[1]);
-	//printf("\n Variable 4: %c",buffer5[2]);
-	//printf("\n Variable 4: %c",buffer5[3]);
-	//printf("\n Variable 4: %c",buffer5[4]);
-	//printf("\n Variable 4: %c",buffer5[5]);
-	//printf("\n Variable 4: %c",buffer5[6]);
-	//printf("\n Variable 4: %c",buffer5[7]);
-	//printf("\n Variable 8: %c",buffer5[8]);
-	//printf("\n Variable 4: %c",buffer5[9]);
-	//printf("\n Variable 4: %c",buffer5[10]);
-	//printf("\n Variable 4: %c",buffer5[11]);
-	//printf("\n Variable 4: %c",buffer5[12]);
-	//printf("\n Variable 4: %c",buffer5[13]);
-	//printf("\n Variable 4: %c",buffer5[14]);
-	//printf("\n Variable 4: %c",buffer5[15]);
-	//printf("\n Variable 16: %c",buffer5[16]);
-	//printf("\n Variable 4: %c",buffer5[17]);
-	//printf("\n Variable 4: %c",buffer5[18]);
-	//printf("\n Variable 4: %c",buffer5[19]);
-	//printf("\n Variable 4: %c",buffer5[20]);
-	//printf("\n Variable 4: %c",buffer5[21]);
-	//printf("\n Variable 4: %c",buffer5[22]);
-	//printf("\n Variable 23: %c",buffer5[23]);
-	//printf("\n Variable 4: %c",buffer5[24]);
 	//printf("\n VELOCIDAD: %f",vrio);
 	//printf("\n LANDA: %f",Planda);
 	//printf("\n LANDAI: %f",Plandai);
@@ -616,7 +582,7 @@ void out(){
 	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
 	//printf("\n CONVERSORSUP: %f",DcVoSup);
 	//printf("\n CONVERSORINF: %f",DcVoInf);
-	printf("\n CONVERSOR: %f",DcVo);
+	//printf("\n CONVERSOR: %f",DcVo);
 	//printf("\n SUMVD: %f",SumaVD);
 	//printf("\n SUMVD: %f",SumaVQ);
 	//printf("\n ContrVod: %f",ContrVod);
@@ -629,8 +595,8 @@ void out(){
 	//printf("\n ContrIoq: %f",ContrIoq);
 	//printf("\n DesDinID: %f",DesDinID);
 	//printf("\n DesDinIQ: %f",DesDinIQ);
-	printf("\n Md: %f",Md);
-	printf("\n Mq: %f",Mq);
+	//printf("\n Md: %f",Md);
+	//printf("\n Mq: %f",Mq);
 	//printf("\n MA: %f",MA);
 	//printf("\n MB: %f",MB);
 	//printf("\n MC: %f",MC);
@@ -645,112 +611,112 @@ void out(){
 	//printf("\n VoRef: %f",VoRef);
 	//printf("\n Iinvd: %f",Iinvd);
 	//printf("\n Iinvq: %f",Iinvq);
-	printf("\n Pot3Phase: %f",Pot3Phase);
+	//printf("\n Pot3Phase: %f",Pot3Phase);
+	//printf("\n ConT: %f",ConT);
 	//printf("\n ConT2: %f",ConT2);
     printf("\n ------------------------");
 
 	//acondicionar variables para txt
-	sprintf(text1,"%5.4f",Planda);
-	strcat(text1,"\t");
-	sprintf(text2,"%5.4f",Pcp);
-	strcat(text2,"\t");
-	sprintf(text3,"%5.4f",acumVeloc);
-	strcat(text3,"\t");
-	sprintf(text4,"%5.4f",Vout);
-	strcat(text4,"\t");
-	sprintf(text5,"%5.4f",DcVo);
-	strcat(text5,"\t");
-	sprintf(text6,"%5.4f",PSend);
-	strcat(text6,"\t");
-	sprintf(text7,"%5.4f",SumaID);
-	strcat(text7,"\t");
-	sprintf(text8,"%5.4f",SumaIQ);
-	strcat(text8,"\t");
-	sprintf(text9,"%5.4f",ContrIod);
-	strcat(text9,"\t");
-	sprintf(text10,"%5.4f",ContrIoq);
-	strcat(text10,"\t");
-	sprintf(text11,"%5.4f",DesDinID);
-	strcat(text11,"\t");
-	sprintf(text12,"%5.4f",DesDinIQ);
-	strcat(text12,"\t");
-	sprintf(text13,"%5.4f",Md);
-	strcat(text13,"\t");
-	sprintf(text14,"%5.4f",Mq);
-	strcat(text14,"\t");
-	sprintf(text15,"%5.4f",MA);
-	strcat(text15,"\t");
-	sprintf(text16,"%5.4f",MB);
-	strcat(text16,"\t");
-	sprintf(text17,"%5.4f",MC);
-	strcat(text17,"\t");
-	sprintf(text18,"%5.4f",InversorA);
-	strcat(text18,"\t");
-	sprintf(text19,"%5.4f",InversorB);
-	strcat(text19,"\t");
-	sprintf(text20,"%5.4f",InversorC);
-	strcat(text20,"\t");
-	sprintf(text21,"%5.4f",IoutInversorA);
-	strcat(text21,"\t");
-	sprintf(text22,"%5.4f",IoutInversorB);
-	strcat(text22,"\t");
-	sprintf(text23,"%5.4f",IoutInversorC);
-	strcat(text23,"\t");
-	sprintf(text24,"%5.4f",VoRef);
-	strcat(text24,"\t");
-	sprintf(text25,"%5.4f",Vod);
-	strcat(text25,"\t");
-	sprintf(text26,"%5.4f",Voq);
-	strcat(text26,"\t");
-	sprintf(text27,"%5.4f",Iinvd);
-	strcat(text27,"\t");
-	sprintf(text28,"%5.4f",Iinvq);
-	strcat(text28,"\t");
-	sprintf(text29,"%5.4f",ConT2);
-	strcat(text29,"\n");
-	if (ConT<1){ConT+=(0.001/10.0);}//ajustar con el tiempo real
-	else {ConT=0;}
-	if (ConT2<1){ConT2+=(0.001/10.0);}//ajustar con el tiempo real
-	else {ConT2=0;}
-	//if (cont<100){cont+=1;}
-	//else {cont=0;}
+	//sprintf(text1,"%5.4f",Planda);
+	//strcat(text1,"\t");
+	//sprintf(text2,"%5.4f",Pcp);
+	//strcat(text2,"\t");
+	//sprintf(text3,"%5.4f",acumVeloc);
+	//strcat(text3,"\t");
+	//sprintf(text4,"%5.4f",Vout);
+	//strcat(text4,"\t");
+	//sprintf(text5,"%5.4f",DcVo);
+	//strcat(text5,"\t");
+	//sprintf(text6,"%5.4f",PSend);
+	//strcat(text6,"\t");
+	//sprintf(text7,"%5.4f",SumaID);
+	//strcat(text7,"\t");
+	//sprintf(text8,"%5.4f",SumaIQ);
+	//strcat(text8,"\t");
+	//sprintf(text9,"%5.4f",ContrIod);
+	//strcat(text9,"\t");
+	//sprintf(text10,"%5.4f",ContrIoq);
+	//strcat(text10,"\t");
+	//sprintf(text11,"%5.4f",DesDinID);
+	//strcat(text11,"\t");
+	//sprintf(text12,"%5.4f",DesDinIQ);
+	//strcat(text12,"\t");
+	//sprintf(text13,"%5.4f",Md);
+	//strcat(text13,"\t");
+	//sprintf(text14,"%5.4f",Mq);
+	//strcat(text14,"\t");
+	//sprintf(text15,"%5.4f",MA);
+	//strcat(text15,"\t");
+	//sprintf(text16,"%5.4f",MB);
+	//strcat(text16,"\t");
+	//sprintf(text17,"%5.4f",MC);
+	//strcat(text17,"\t");
+	//sprintf(text18,"%5.4f",InversorA);
+	//strcat(text18,"\t");
+	//sprintf(text19,"%5.4f",InversorB);
+	//strcat(text19,"\t");
+	//sprintf(text20,"%5.4f",InversorC);
+	//strcat(text20,"\t");
+	//sprintf(text21,"%5.4f",IoutInversorA);
+	//strcat(text21,"\t");
+	//sprintf(text22,"%5.4f",IoutInversorB);
+	//strcat(text22,"\t");
+	//sprintf(text23,"%5.4f",IoutInversorC);
+	//strcat(text23,"\t");
+	//sprintf(text24,"%5.4f",VoRef);
+	//strcat(text24,"\t");
+	//sprintf(text25,"%5.4f",Vod);
+	//strcat(text25,"\t");
+	//sprintf(text26,"%5.4f",Voq);
+	//strcat(text26,"\t");
+	//sprintf(text27,"%5.4f",Iinvd);
+	//strcat(text27,"\t");
+	//sprintf(text28,"%5.4f",Iinvq);
+	//strcat(text28,"\t");
+	//sprintf(text29,"%5.4f",ConT2);
+	//strcat(text29,"\n");
+	printf("\n se va a contar");
+	if (ConT<0.1){ConT+=(0.1/1000.0);}//ajustar con el tiempo real
+	else {ConT=0.0;}
+	printf("\n se ha contado");
+	//if (ConT2>10){ConT2=0.0;}//ajustar con el tiempo real
 
 	//Guardar txt
-	fputs(text1,fichero);
-	fputs(text2,fichero);
-	fputs(text3,fichero);
-	fputs(text4,fichero);
-	fputs(text5,fichero);
-	fputs(text6,fichero);
-	fputs(text7,fichero);
-	fputs(text8,fichero);
-	fputs(text9,fichero);
-	fputs(text10,fichero);
-	fputs(text11,fichero);
-	fputs(text12,fichero);
-	fputs(text13,fichero);
-	fputs(text14,fichero);
-	fputs(text15,fichero);
-	fputs(text16,fichero);
-	fputs(text17,fichero);
-	fputs(text18,fichero);
-	fputs(text19,fichero);
-	fputs(text20,fichero);
-	fputs(text21,fichero);
-	fputs(text22,fichero);
-	fputs(text23,fichero);
-	fputs(text24,fichero);
-	fputs(text25,fichero);
-	fputs(text26,fichero);
-	fputs(text27,fichero);
-	fputs(text28,fichero);
-	fputs(text29,fichero);
+	//fputs(text1,fichero);
+	//fputs(text2,fichero);
+	//fputs(text3,fichero);
+	//fputs(text4,fichero);
+	//fputs(text5,fichero);
+	//fputs(text6,fichero);
+	//fputs(text7,fichero);
+	//fputs(text8,fichero);
+	//fputs(text9,fichero);
+	//fputs(text10,fichero);
+	//fputs(text11,fichero);
+	//fputs(text12,fichero);
+	//fputs(text13,fichero);
+	//fputs(text14,fichero);
+	//fputs(text15,fichero);
+	//fputs(text16,fichero);
+	//fputs(text17,fichero);
+	//fputs(text18,fichero);
+	//fputs(text19,fichero);
+	//fputs(text20,fichero);
+	//fputs(text21,fichero);
+	//fputs(text22,fichero);
+	//fputs(text23,fichero);
+	//fputs(text24,fichero);
+	//fputs(text25,fichero);
+	//fputs(text26,fichero);
+	//fputs(text27,fichero);
+	//fputs(text28,fichero);
+	//fputs(text29,fichero);
 }
 int main(int argc,char** argv) {
 	//Time
 	struct timespec t;
 	struct sched_param param;
-	int interval=1000000; //en nanoseg--4s--1000000000-->-->1 ms pero o se observa bien debido a la comunicacion
+	int interval=100000000; //en nanoseg--4s--1000000000-->-->1 ms pero o se observa bien debido a la comunicacion
 	
 	
 	if(argc>=2 && atoi(argv[1])>0)
@@ -769,12 +735,13 @@ int main(int argc,char** argv) {
 	if (wiringPiSetup () == -1)
     return 1 ;
    pinMode (2, OUTPUT) ;   
+
 	
 	
-	//fd=serialOpen("/dev/ttyACM0",115200);
-	//serialClose(fd);
-	//fd=serialOpen("/dev/ttyACM0",115200);
-	//sleep(1);
+	fd=serialOpen("/dev/ttyACM0",115200);
+	serialClose(fd);
+	fd=serialOpen("/dev/ttyACM0",115200);
+	sleep(1);
 	
 	/* get current time */
  	clock_gettime(0,&t);
@@ -796,9 +763,9 @@ int main(int argc,char** argv) {
 	}
 	digitalWrite (2, estado) ; 	//pin 13 gpio readall
 	
-	fichero =fopen("graficoH.txt","a");
+	//fichero =fopen("graficoH.txt","a");
 	out();		
-	fclose(fichero);
+	//fclose(fichero);
 	
 	
 	/* calculate next shot */
