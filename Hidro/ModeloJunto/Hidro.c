@@ -29,13 +29,24 @@ const int seconds = 1;
 #define NSEC_PER_SEC    1000000000//1000000000
 int estado=0;
 
+//Prueba
+double Planda1=0,Planda2=0,Planda3=0,Planda4=0,Planda5=0,Plandai1,Plandai2,Plandai3,Plandai4,Plandai5;
+double acumVeloc1=1,acumVeloc2=1,acumVeloc3=1,acumVeloc4=1,acumVeloc5=1,Pcp1,Pcp2,Pcp3,Pcp4,Pcp5;
+double Ppot1,Ppot2,Ppot3,Ppot4,Ppot5,acel1,acel2,acel3,acel4,acel5,PTmec1,PTmec2,PTmec3,PTmec4,PTmec5;
+double Pin1=1,Pin2=1,Pin3=1,Pin4=1,Pin5=1,Pout1=1,Pout2=1,Pout3=1,Pout4=1,Pout5=1;
+double Vout1,Vout2,Vout3,Vout4,Vout5,NVel,NTmec;
+
+
+//Entradas
+double vrio=2.8;
+double Rcarga=50;
+
 //Parametros mecanicos
-double D=1.5;
-double radio=0.75;
+double D=1;
+double radio=0.5;//D/2
 double beta=0;
 double Tfric=0;
-double iner = 0.00161919; //50;//acomodar aqui(aun no se que pasa)-->efectos de modelado
-double vrio=2.8;
+double iner = 0.0465;//0.00161919; //50;//acomodar aqui(aun no se que pasa)-->efectos de modelado
 double B=0;
 double Planda=0;
 double Plandai;
@@ -45,12 +56,14 @@ double PTmec;
 double Ppot;
 double acel;
 
-//Parametros motor DC
-double Ri=0.973;
-double Ji=1.72;
+//Parametros Generador DC
+double Ri=2.581;
+double Ji=0.0465;
 double Kp=5.6627;
-double Kb=6.2;
-double Bi=0.1;
+double Kb=1.25;
+double Bi=0.002953;
+double Li=0.0281;
+
 double Vout;
 double Iout=0;
 double PTelec=0;
@@ -59,9 +72,11 @@ double Pelec=0;
 //Conversor
 double ConvInSup1=0, ConvInSup2=0, ConvOutSup1=0,ConvOutSup2=0;
 double ConvInInf1=0, ConvInInf2=0, ConvOutInf1=0,ConvOutInf2=0;
-double DcVo=0, DcVoSup = 0, DcVoInf = 0, Duty = 1;
+double DcVo=0, DcVoSup = 0, DcVoInf = 0, Duty = 0, Duty1 = 0, DCDiv = 0, DCDiv2 = 0;
 double ContIIn = 0, ContIIn1 = 0, ContIIn2 = 0, ContIOut1 = 0, ContIOut2 = 0;
 double VoContrEntrada = 0,ContrDcVo = 0;
+double SalidaVDCDeseada = 250;
+
 
 //Conversor corrriente
 double DI1=1, DI2=1, I1=1,I2=1;
@@ -186,7 +201,7 @@ double potencia (double cp,double rad, double vrio){
 	double Po;
 
 	Ar = ((PI*(pow(rad,2))));
-	Po = 0.5*(rad*1000*Ar*cp*(pow(vrio,3)));
+	Po = (rad*1000*Ar*cp*(pow(vrio,3)));
 
 	return Po;
 }
@@ -205,7 +220,7 @@ double aceleracion(double Tmec,double Telect, double Tfric, double iner, double 
 }
 //Generador
 double tension(double Ri,double Kb,double Iout,double vel){
-	double w=Kb*vel*1.6;
+	double w=Kb*vel*2.4;
 	double w1=Ri*Iout;
 	double v=w+w1;
 	return v;
@@ -213,19 +228,22 @@ double tension(double Ri,double Kb,double Iout,double vel){
 //Conversor DC-DC
 double conversorSup(double ConvIn, double ConvInS1,double ConvInS2,double ConvOutS1,double ConvOutS2){
 	double Vo=1;
-	Vo=(0.014*ConvIn)+(0.02801*ConvInS1)+(0.014*ConvInS2)+(1.94*ConvOutS1)-(0.9961*ConvOutS2);
+	//Vo=(0.014*ConvIn)+(0.02801*ConvInS1)+(0.014*ConvInS2)+(1.94*ConvOutS1)-(0.9961*ConvOutS2);//Buck
+	//Vo=(0.01684*ConvIn)+(0.03367*ConvInS1)+(0.01684*ConvInS2)+(1.93*ConvOutS1)-(0.9976*ConvOutS2);//Boost
+	Vo=(0.01684*ConvIn)+(0.03367*ConvInS1)+(0.01684*ConvInS2)+(1.93*ConvOutS1)-(0.9976*ConvOutS2);
 	return Vo;
 }
 
-double conversorInf(double ConvIn,double ConvInI2,double ConvOutI1,double ConvOutI2){
+double conversorInf(double ConvIn1,double ConvInI2,double ConvOutI1,double ConvOutI2){
 	double Vo=1;
-	Vo=(0.001969*ConvIn)-(0.001969*ConvInI2)+(1.94*ConvOutI1)-(0.9961*ConvOutI2);
+	Vo=(0.001233*ConvIn1)-(0.001233*ConvInI2)+(1.998*ConvOutI1)-(0.9975*ConvOutI2);//Boost
 	return Vo;
 }   
 
 double ControlDcVo(double ContIIn, double ContIIn1,double ContIOut1){
 	double Vo=1;
-	Vo=(0.000865*ContIIn)+(0.000865*ContIIn1)+(ContIOut1);
+	//Vo=(0.00125*ContIIn)+(0.00125*ContIIn1)+(ContIOut1);//Funciona con modelo pero es ideal
+	Vo=(0.001002*ContIIn)-(0.0009984*ContIIn1)+(ContIOut1);
 	return Vo;
 }
 
@@ -234,13 +252,13 @@ double ControlDcVo(double ContIIn, double ContIIn1,double ContIOut1){
 double ControlVDQ(double SVDQ, double InCtrVDQ1, double OutCtrVDQ1)
 {
 	double Vo=1;
-	Vo=(SVDQ * 0.5) - (0.495 * InCtrVDQ1) + (OutCtrVDQ1);
+	//Vo=(SVDQ * 0.5) - (0.495 * InCtrVDQ1) + (OutCtrVDQ1);
+	Vo=(SVDQ * 0.2001) - (0.2 * InCtrVDQ1) + (OutCtrVDQ1);
 	return Vo;
 } 
 
 //Control de corriente
-double ControlIDQ(double SIDQ, double InCtrIDQ1, double OutCtrIDQ1)
-{
+double ControlIDQ(double SIDQ, double InCtrIDQ1, double OutCtrIDQ1){
 	double Vo=1;
 	Vo=(SIDQ * 5) - (4.99 * InCtrIDQ1) + (OutCtrIDQ1);
 	return Vo;
@@ -248,8 +266,7 @@ double ControlIDQ(double SIDQ, double InCtrIDQ1, double OutCtrIDQ1)
 
 //DQ a ABC
 //Primera linea
-double PrimeraABC(double Vd, double Vq, double Vo)
-{
+double PrimeraABC(double Vd, double Vq, double Vo){
 	double V=1;
 	double w = 2*PI*60;
 	double V1 = sin(w*ConT);
@@ -259,8 +276,7 @@ double PrimeraABC(double Vd, double Vq, double Vo)
 }
 
 //Segunda linea
-double SegundaABC(double Vd, double Vq, double Vo)
-{
+double SegundaABC(double Vd, double Vq, double Vo){
 	double V=1;
 	double w = 2*PI*60;
 	double V1 = -(sin(w*ConT)* 0.5)-(cos(w*ConT) * (sqrt(3)/2));
@@ -270,8 +286,7 @@ double SegundaABC(double Vd, double Vq, double Vo)
 }
 
 //Tercera linea
-double TerceraABC(double Vd, double Vq, double Vo)
-{
+double TerceraABC(double Vd, double Vq, double Vo){
 	double V=1;
 	double w = 2*PI*60;
 	double V1 = -(-(sin(w*ConT)* 0.5)-(cos(w*ConT) * (sqrt(3)/2)))-(sin(w*ConT));
@@ -396,52 +411,147 @@ void out(){
 	////TURBINA DE RIO	
 	Planda=landa(acumVeloc,vrio,radio);
 	Plandai=landai(Planda,beta);
-	Pcp=cp(beta,Planda,Plandai);
+	Pcp=cp(beta,Planda,Plandai);		
 	Ppot=potencia(Pcp,radio,vrio);
+	if (Ppot>5000){Ppot=5000;}	
+	if (Ppot<0){Ppot=0;}	
 	Tvis= acumVeloc*B;
 	PTmec= Tmec(Ppot,acumVeloc);
 	acel = aceleracion(PTmec,PTelec,Tfric,iner, Tvis);
 	acumVeloc = integral1(IntIn1,IntOut1);
 	IntIn1 = acel;
 	IntOut1 = acumVeloc;
-
 	Vout= tension(Ri,Kb, Iout,acumVeloc);
 	
+	NTmec=PTmec*0.98*(1/2.4);
+	NVel=acumVeloc*2.4;
+	
+
+
+	//Prueba
+	//1
+	Planda1=landa(acumVeloc1,1,radio);
+	Plandai1=landai(Planda1,beta);
+	Pcp1=cp(beta,Planda1,Plandai1);		
+	Ppot1=potencia(Pcp1,radio,1);
+	if (Ppot1>5000){Ppot1=5000;}
+	if (Ppot1<0){Ppot1=0;}	
+	PTmec1= Tmec(Ppot1,acumVeloc1);
+	acel1 = aceleracion(PTmec1,PTelec,0,iner, 0);
+	acumVeloc1 = integral1(Pin1,Pout1);
+	Pin1 = acel1;
+	Pout1 = acumVeloc1;
+	Vout1= tension(Ri,Kb, 0,acumVeloc1);
+	
+	//1.5
+	Planda2=landa(acumVeloc2,1.5,radio);
+	Plandai2=landai(Planda2,beta);
+	Pcp2=cp(beta,Planda2,Plandai2);		
+	Ppot2=potencia(Pcp2,radio,1.5);
+	if (Ppot2>5000){Ppot2=5000;}
+	if (Ppot2<0){Ppot2=0;}	
+	PTmec2= Tmec(Ppot2,acumVeloc2);
+	acel2 = aceleracion(PTmec2,PTelec,0,iner, 0);
+	acumVeloc2 = integral1(Pin2,Pout2);
+	Pin2 = acel2;
+	Pout2 = acumVeloc2;
+	Vout2= tension(Ri,Kb, 0,acumVeloc2);
+	
+	//2
+	Planda3=landa(acumVeloc3,2,radio);
+	Plandai3=landai(Planda3,beta);
+	Pcp3=cp(beta,Planda3,Plandai3);		
+	Ppot3=potencia(Pcp3,radio,2);
+	if (Ppot3>5000){Ppot3=5000;}
+	if (Ppot3<0){Ppot3=0;}	
+	PTmec3= Tmec(Ppot3,acumVeloc3);
+	acel3 = aceleracion(PTmec3,PTelec,0,iner, 0);
+	acumVeloc3 = integral1(Pin3,Pout3);
+	Pin3 = acel3;
+	Pout3 = acumVeloc3;
+	Vout3= tension(Ri,Kb, 0,acumVeloc3);
+	
+	//2.5
+	Planda4=landa(acumVeloc4,2.5,radio);
+	Plandai4=landai(Planda4,beta);
+	Pcp4=cp(beta,Planda4,Plandai4);		
+	Ppot4=potencia(Pcp4,radio,2.5);
+	if (Ppot4>5000){Ppot4=5000;}
+	if (Ppot4<0){Ppot4=0;}	
+	PTmec4= Tmec(Ppot4,acumVeloc4);
+	acel4 = aceleracion(PTmec4,PTelec,0,iner, 0);
+	acumVeloc4 = integral1(Pin4,Pout4);
+	Pin4 = acel4;
+	Pout4 = acumVeloc4;
+	Vout4= tension(Ri,Kb, 0,acumVeloc4);
+	
+	//2.8
+	Planda5=landa(acumVeloc5,2.8,radio);
+	Plandai5=landai(Planda5,beta);
+	Pcp5=cp(beta,Planda5,Plandai5);		
+	Ppot5=potencia(Pcp5,radio,2.8);
+	if (Ppot5>5000){Ppot5=5000;}
+	if (Ppot5<0){Ppot5=0;}	
+	PTmec5= Tmec(Ppot5,acumVeloc5);
+	acel5 = aceleracion(PTmec5,PTelec,0,iner, 0);
+	acumVeloc5 = integral1(Pin5,Pout5);
+	Pin5 = acel5;
+	Pout5 = acumVeloc5;
+	Vout5= tension(Ri,Kb, 0,acumVeloc5);
+	
+	
 	//Par electrico
-	PTelec= Telec(Kp,Iout);
+	if(ConT>0.1){
+	PTelec= Telec(Kp,Iout);//No olvidar el signo
+} else {PTelec= 0;}//Solo funciona para las pruebas
+	
+	
+	//printf("\n %f",Ppot);
+	//printf("\n %f",PTmec);
+	//printf("\n %f",PTelec);
 	
 	//CONVERSOR DC-DC
-			
+	DcVo = DcVoSup + 0.001;
+	Duty=(Vout/SalidaVDCDeseada);
+	if (Duty>0.9){Duty=0.9;}
+	DCDiv = Vout/(Duty);
 	
+	
+	Duty1=(Vout/DcVo);
+	DCDiv2 = Vout/(Duty1);
 			
 	//Entrada conversor
-	Duty=(300/Vout);
-	if (Duty>1){Duty=1;}
 	ContrDcVo=DcVo/Vout;
 	
 	//Control
-	VoContrEntrada = ControlDcVo(Duty - ContrDcVo,ContIIn1,ContIOut1);
+	VoContrEntrada = ControlDcVo(SalidaVDCDeseada - DcVo,ContIIn1,ContIOut1);
 	ContIOut1 = VoContrEntrada;
-	ContIIn1 = Duty - ContrDcVo;
+	ContIIn1 = SalidaVDCDeseada - DcVo;
 	
 	//Conversor
-	DcVoSup =  conversorSup(VoContrEntrada,ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
-	ConvOutSup2 = ConvOutSup1;
-	ConvInSup2 = ConvInSup1;
-	ConvOutSup1 = DcVoSup;
-	ConvInSup1 = VoContrEntrada*Vout;
+	DcVoSup = Vout/(1 - VoContrEntrada);
+	//DcVoSup =  conversorSup(VoContrEntrada,ConvInSup1,ConvInSup2,ConvOutSup1,ConvOutSup2);
+	//ConvOutSup2 = ConvOutSup1;
+	//ConvInSup2 = ConvInSup1;
+	//ConvOutSup1 = DcVoSup;
+	//ConvInSup1 = VoContrEntrada;
 	
 	
-	DcVoInf = conversorInf(Iout,ConvInInf2,ConvOutInf1,ConvOutInf2);
-	ConvOutInf2 = ConvOutInf1;
-	ConvInInf2 = ConvInInf1;
-	ConvOutInf1 = DcVoInf;
-	ConvInInf1 = Iout;
 	
-	DcVo = DcVoSup + DcVoInf + 0.001;
+	//DcVoInf = conversorInf(ConvInInf1,ConvInInf2,ConvOutInf1,ConvOutInf2);
+	//ConvOutInf2 = ConvOutInf1;
+	//ConvInInf2 = ConvInInf1;
+	//ConvOutInf1 = DcVoInf;
+	//ConvInInf1 = Iout;
+	//if (DcVoInf>5){DcVoInf=5;}
+	
+	
+	
 			
-	Iout=Pot3Phase/(DcVo);//DcVo/225;
+	Iout=Pot3Phase/(DcVo);//Pot3Phase/DcVo;
 	if (Iout>15){Iout=15;}
+	if (Iout<0){Iout=0;}
+	if (acumVeloc<0){Iout=0;}
 	
 	
 	
@@ -490,9 +600,6 @@ void out(){
 	else {Mq = Mq;}
 	
 	//Generación MABC
-	//MA = PrimeraABC(0.7146, 0.1728, 0);
-	//MB = SegundaABC(0.7146, 0.1728, 0);
-	//MC = TerceraABC(0.7146, 0.1728, 0);
 	MA = PrimeraABC(Md, Mq, 0);
 	MB = SegundaABC(Md, Mq, 0);
 	MC = TerceraABC(Md, Mq, 0);
@@ -533,9 +640,9 @@ void out(){
 	InversorA = InvSupA + InvInfA;
 	InversorB = InvSupB + InvInfB;
 	InversorC = InvSupC + InvInfC;
-	IoutInversorA = InversorA/20.0;
-	IoutInversorB = InversorB/20.0;
-	IoutInversorC = InversorC/20.0;
+	IoutInversorA = InversorA/Rcarga;//Valor leido del archivo
+	IoutInversorB = InversorB/Rcarga;
+	IoutInversorC = InversorC/Rcarga;
 	
 	
 	//Tensión y corriente Inversor DQ
@@ -554,35 +661,37 @@ void out(){
 	
 	//Comuniacion Serial-- envio datos arduino
 	
-	bits =(int) (((Md+1)*1000));//4095 para DAC
-	bits2=(int) (((Mq+1)*1000));//4095 para DAC
-	bits3=(int) (((MC+2)*1000));//4095 para DAC
+	//bits =(int) (((Md+1)*1000));//4095 para DAC
+	//bits2=(int) (((Mq+1)*1000));//4095 para DAC
+	//bits3=(int) (((MC+2)*1000));//4095 para DAC
 	
-	memset(buffer5,0,sizeof(buffer5));
+	//memset(buffer5,0,sizeof(buffer5));
 	
-	sprintf(buffer5,"v%07dw%07dz%07d\n",bits,bits2,bits3);
-	serialPuts(fd,buffer5);
-	serialFlush(fd);
-	tcflush(fd,TCIOFLUSH);
+	//sprintf(buffer5,"v%07dw%07dz%07d\n",bits,bits2,bits3);
+	//serialPuts(fd,buffer5);
+	//serialFlush(fd);
+	//tcflush(fd,TCIOFLUSH);
 
 	//impresion
 	//printf("\n Variable 2: %d",bits2);
 	//printf("\n PSend 3: %f",PSend);
 	//printf("\n Variable 0: %c",buffer5[0]);
-	//printf("\n VELOCIDAD: %f",vrio);
-	//printf("\n LANDA: %f",Planda);
-	//printf("\n LANDAI: %f",Plandai);
-	//printf("\n CP : %f",Pcp);
-	//printf("\n POTENCIA: %f",Ppot);
-	//printf("\n PARE: %f",PTelec);
-	//printf("\n PARM: %f",PTmec);
+	printf("\n VELOCIDAD: %f",vrio);
+	printf("\n Rcarga: %f",Rcarga);
+	//printf("\n LANDA: %f",PTmec1);
+	//printf("\n LANDAI: %f",Ppot1);
+	//printf("\n CP : %f",acumVeloc1);
+	printf("\n POTENCIA: %f",Ppot);
+	printf("\n PARE: %f",PTelec);
+	printf("\n PARM: %f",PTmec);
 	//printf("\n ACEL: %f",acel);
-	//printf("\n VANGULAR: %f",acumVeloc);
-	//printf("\n TENSION: %f",Vout);
-	//printf("\n CORRIENTE: %f",Iout);//Corriente Dc
+	printf("\n VANGULAR: %f",acumVeloc);
+	printf("\n TENSION: %f",Vout);
+	printf("\n CORRIENTE: %f",Iout);//Corriente Dc
+	//printf("\n VoContrEntrada: %f",VoContrEntrada);
 	//printf("\n CONVERSORSUP: %f",DcVoSup);
 	//printf("\n CONVERSORINF: %f",DcVoInf);
-	//printf("\n CONVERSOR: %f",DcVo);
+	printf("\n CONVERSOR: %f",DcVo);
 	//printf("\n SUMVD: %f",SumaVD);
 	//printf("\n SUMVD: %f",SumaVQ);
 	//printf("\n ContrVod: %f",ContrVod);
@@ -612,51 +721,53 @@ void out(){
 	//printf("\n Iinvd: %f",Iinvd);
 	//printf("\n Iinvq: %f",Iinvq);
 	//printf("\n Pot3Phase: %f",Pot3Phase);
-	//printf("\n ConT: %f",ConT);
+	printf("\n ConT: %f",ConT);
 	//printf("\n ConT2: %f",ConT2);
     printf("\n ------------------------");
-
+    
+    
+	
 	//acondicionar variables para txt
-	//sprintf(text1,"%5.4f",Planda);
-	//strcat(text1,"\t");
-	//sprintf(text2,"%5.4f",Pcp);
-	//strcat(text2,"\t");
-	//sprintf(text3,"%5.4f",acumVeloc);
-	//strcat(text3,"\t");
-	//sprintf(text4,"%5.4f",Vout);
-	//strcat(text4,"\t");
-	//sprintf(text5,"%5.4f",DcVo);
-	//strcat(text5,"\t");
-	//sprintf(text6,"%5.4f",PSend);
-	//strcat(text6,"\t");
-	//sprintf(text7,"%5.4f",SumaID);
-	//strcat(text7,"\t");
-	//sprintf(text8,"%5.4f",SumaIQ);
-	//strcat(text8,"\t");
-	//sprintf(text9,"%5.4f",ContrIod);
-	//strcat(text9,"\t");
-	//sprintf(text10,"%5.4f",ContrIoq);
-	//strcat(text10,"\t");
-	//sprintf(text11,"%5.4f",DesDinID);
-	//strcat(text11,"\t");
-	//sprintf(text12,"%5.4f",DesDinIQ);
-	//strcat(text12,"\t");
-	//sprintf(text13,"%5.4f",Md);
-	//strcat(text13,"\t");
-	//sprintf(text14,"%5.4f",Mq);
-	//strcat(text14,"\t");
-	//sprintf(text15,"%5.4f",MA);
-	//strcat(text15,"\t");
-	//sprintf(text16,"%5.4f",MB);
-	//strcat(text16,"\t");
-	//sprintf(text17,"%5.4f",MC);
-	//strcat(text17,"\t");
-	//sprintf(text18,"%5.4f",InversorA);
-	//strcat(text18,"\t");
-	//sprintf(text19,"%5.4f",InversorB);
-	//strcat(text19,"\t");
-	//sprintf(text20,"%5.4f",InversorC);
-	//strcat(text20,"\t");
+	sprintf(text1,"%5.4f",NVel);
+	strcat(text1,"\t");
+	sprintf(text2,"%5.4f",acumVeloc);
+	strcat(text2,"\t");
+	sprintf(text3,"%5.4f",Vout);
+	strcat(text3,"\t");
+	sprintf(text4,"%5.4f",Iout);
+	strcat(text4,"\t");
+	sprintf(text5,"%5.4f",PTmec4);
+	strcat(text5,"\t");
+	sprintf(text6,"%5.4f",PTmec5);
+	strcat(text6,"\t");
+	sprintf(text7,"%5.4f",acumVeloc);
+	strcat(text7,"\t");
+	sprintf(text8,"%5.4f",acumVeloc1);
+	strcat(text8,"\t");
+	sprintf(text9,"%5.4f",acumVeloc2);
+	strcat(text9,"\t");
+	sprintf(text10,"%5.4f",acumVeloc3);
+	strcat(text10,"\t");
+	sprintf(text11,"%5.4f",acumVeloc4);
+	strcat(text11,"\t");
+	sprintf(text12,"%5.4f",acumVeloc5);
+	strcat(text12,"\t");
+	sprintf(text13,"%5.4f",Ppot);
+	strcat(text13,"\t");
+	sprintf(text14,"%5.4f",Ppot1);
+	strcat(text14,"\t");
+	sprintf(text15,"%5.4f",Ppot2);
+	strcat(text15,"\t");
+	sprintf(text16,"%5.4f",Ppot3);
+	strcat(text16,"\t");
+	sprintf(text17,"%5.4f",Ppot4);
+	strcat(text17,"\t");
+	sprintf(text18,"%5.4f",Ppot5);
+	strcat(text18,"\t");
+	sprintf(text19,"%5.4f",PTelec);
+	strcat(text19,"\t");
+	sprintf(text20,"%5.4f",DcVo);
+	strcat(text20,"\t");
 	//sprintf(text21,"%5.4f",IoutInversorA);
 	//strcat(text21,"\t");
 	//sprintf(text22,"%5.4f",IoutInversorB);
@@ -665,43 +776,38 @@ void out(){
 	//strcat(text23,"\t");
 	//sprintf(text24,"%5.4f",VoRef);
 	//strcat(text24,"\t");
-	//sprintf(text25,"%5.4f",Vod);
+	//sprintf(text25,"%5.4f",VoRef);
 	//strcat(text25,"\t");
-	//sprintf(text26,"%5.4f",Voq);
+	//sprintf(text26,"%5.4f",VoRef);
 	//strcat(text26,"\t");
-	//sprintf(text27,"%5.4f",Iinvd);
+	//sprintf(text27,"%5.4f",VoRef);
 	//strcat(text27,"\t");
-	//sprintf(text28,"%5.4f",Iinvq);
+	//sprintf(text28,"%5.4f",VoRef);
 	//strcat(text28,"\t");
-	//sprintf(text29,"%5.4f",ConT2);
-	//strcat(text29,"\n");
-	printf("\n se va a contar");
-	if (ConT<0.1){ConT+=(0.1/1000.0);}//ajustar con el tiempo real
-	else {ConT=0.0;}
-	printf("\n se ha contado");
-	//if (ConT2>10){ConT2=0.0;}//ajustar con el tiempo real
+	sprintf(text29,"%5.4f",ConT);//Aqui contador
+	strcat(text29,"\n");
 
 	//Guardar txt
-	//fputs(text1,fichero);
-	//fputs(text2,fichero);
-	//fputs(text3,fichero);
-	//fputs(text4,fichero);
-	//fputs(text5,fichero);
-	//fputs(text6,fichero);
-	//fputs(text7,fichero);
-	//fputs(text8,fichero);
-	//fputs(text9,fichero);
-	//fputs(text10,fichero);
-	//fputs(text11,fichero);
-	//fputs(text12,fichero);
-	//fputs(text13,fichero);
-	//fputs(text14,fichero);
-	//fputs(text15,fichero);
-	//fputs(text16,fichero);
-	//fputs(text17,fichero);
-	//fputs(text18,fichero);
-	//fputs(text19,fichero);
-	//fputs(text20,fichero);
+	fputs(text1,fichero);
+	fputs(text2,fichero);
+	fputs(text3,fichero);
+	fputs(text4,fichero);
+	fputs(text5,fichero);
+	fputs(text6,fichero);
+	fputs(text7,fichero);
+	fputs(text8,fichero);
+	fputs(text9,fichero);
+	fputs(text10,fichero);
+	fputs(text11,fichero);
+	fputs(text12,fichero);
+	fputs(text13,fichero);
+	fputs(text14,fichero);
+	fputs(text15,fichero);
+	fputs(text16,fichero);
+	fputs(text17,fichero);
+	fputs(text18,fichero);
+	fputs(text19,fichero);
+	fputs(text20,fichero);
 	//fputs(text21,fichero);
 	//fputs(text22,fichero);
 	//fputs(text23,fichero);
@@ -710,14 +816,26 @@ void out(){
 	//fputs(text26,fichero);
 	//fputs(text27,fichero);
 	//fputs(text28,fichero);
-	//fputs(text29,fichero);
+	fputs(text29,fichero);
+
+	
+	//contador
+	//printf("\n se va a contar");
+	if (ConT<10){ConT+=(0.1/1000.0);}//ajustar con el tiempo real
+	else {ConT=0.0;}
+	//printf("\n se ha contado");
+	if (ConT2<0.01){ConT2+=0.1/1000.0;}//ajustar con el tiempo real
+	else {ConT2=0.0;}
 }
 int main(int argc,char** argv) {
 	//Time
 	struct timespec t;
 	struct sched_param param;
-	int interval=100000000; //en nanoseg--4s--1000000000-->-->1 ms pero o se observa bien debido a la comunicacion
+	int interval=10000000; //en nanoseg--4s--1000000000-->-->10 ms
 	
+	FILE * fp;
+	int aaa,bbb;
+	long int fsize;
 	
 	if(argc>=2 && atoi(argv[1])>0)
 	{
@@ -735,13 +853,15 @@ int main(int argc,char** argv) {
 	if (wiringPiSetup () == -1)
     return 1 ;
    pinMode (2, OUTPUT) ;   
+   
+   
 
 	
-	
-	fd=serialOpen("/dev/ttyACM0",115200);
-	serialClose(fd);
-	fd=serialOpen("/dev/ttyACM0",115200);
-	sleep(1);
+	//Activar para la comunicacion serial
+	//fd=serialOpen("/dev/ttyACM0",115200);
+	//serialClose(fd);
+	//fd=serialOpen("/dev/ttyACM0",115200);
+	//sleep(1);
 	
 	/* get current time */
  	clock_gettime(0,&t);
@@ -763,9 +883,29 @@ int main(int argc,char** argv) {
 	}
 	digitalWrite (2, estado) ; 	//pin 13 gpio readall
 	
-	//fichero =fopen("graficoH.txt","a");
-	out();		
-	//fclose(fichero);
+	
+   
+	fp = fopen ("Entrada.txt", "r");
+	fseek(fp, 0, SEEK_END);//Pone el puntero al final del archivo
+	fsize = ftell(fp);//Determina la posicion del puntero
+	fseek(fp, fsize-5, SEEK_SET);//Setea el puntero en la posicion de los ultimos datos
+	fscanf(fp,"%i,%i",&aaa,&bbb);//Asigna a las variables los valores
+	fclose(fp);
+	//vrio=((double)aaa)/10.0;
+	//Rcarga=(double)bbb;
+	
+	//Evita valores indeseados
+	//if (vrio<1){vrio=1;}	
+	//if (vrio>2.8){vrio=2.8;}
+	//if (Rcarga<15){Rcarga=15;}	
+	//if (Rcarga>50){Rcarga=50;}
+
+	
+	fichero =fopen("graficoH.txt","a");
+	out();
+	fclose(fichero);
+	Rcarga=Rcarga-0.0035;
+	if (ConT>1){exit(-1);}
 	
 	
 	/* calculate next shot */
