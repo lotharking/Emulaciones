@@ -178,21 +178,21 @@ double integral1(double IntIn1, double IntOut1){
 
 double landa(double wangular, double vrio, double r){
 	double x=wangular*r;
-	double y=x/(vrio+0.001);
+	double y=x/(vrio+0.01);
 	return y;
 }
 
 double landai(double landa, double beta){
 	double x,y;
-	x= (1/(landa + (0.08*beta)))-(0.035/((pow(beta,3))+1));
-	y= 1/x;
+	x= (1/(0.01 + landa + (0.08*beta)))-(0.035/((pow(beta,3))+1));
+	y= 1/(x+0.01);
 	return y;
 }
 double cp(double beta, double landa, double landai){
 	double w=0.5176;
-	double w1=116/landai;
+	double w1=116/(landai+0.001);
 	double w2=0.4*beta;
-	double w3=exp(-21/landai);
+	double w3=exp(-21/(landai+0.001));
 	double x=(w*(w1-w2-5)*w3)+(0.0068*landa);
 	return x;
 }
@@ -206,7 +206,7 @@ double potencia (double cp,double rad, double vrio){
 	return Po;
 }
 double Tmec(double pot, double w){
-	double x=pot/w;
+	double x=pot/(w+0.01);
 	return x;
 }
 double Telec(double kp, double iout){
@@ -417,87 +417,23 @@ void out(){
 	if (Ppot<0){Ppot=0;}	
 	Tvis= acumVeloc*B;
 	PTmec= Tmec(Ppot,acumVeloc);
+	if (PTmec<0){PTmec=0;}
+	
 	acel = aceleracion(PTmec,PTelec,Tfric,iner, Tvis);
 	acumVeloc = integral1(IntIn1,IntOut1);
 	IntIn1 = acel;
 	IntOut1 = acumVeloc;
+	if (acumVeloc<0){acumVeloc=0;}
 	Vout= tension(Ri,Kb, Iout,acumVeloc);
 	
 	NTmec=PTmec*0.98*(1/2.4);
 	NVel=acumVeloc*2.4;
 	
-
-
-	//Prueba
-	//1
-	Planda1=landa(acumVeloc1,1,radio);
-	Plandai1=landai(Planda1,beta);
-	Pcp1=cp(beta,Planda1,Plandai1);		
-	Ppot1=potencia(Pcp1,radio,1);
-	if (Ppot1>5000){Ppot1=5000;}
-	if (Ppot1<0){Ppot1=0;}	
-	PTmec1= Tmec(Ppot1,acumVeloc1);
-	acel1 = aceleracion(PTmec1,PTelec,0,iner, 0);
-	acumVeloc1 = integral1(Pin1,Pout1);
-	Pin1 = acel1;
-	Pout1 = acumVeloc1;
-	Vout1= tension(Ri,Kb, 0,acumVeloc1);
 	
-	//1.5
-	Planda2=landa(acumVeloc2,1.5,radio);
-	Plandai2=landai(Planda2,beta);
-	Pcp2=cp(beta,Planda2,Plandai2);		
-	Ppot2=potencia(Pcp2,radio,1.5);
-	if (Ppot2>5000){Ppot2=5000;}
-	if (Ppot2<0){Ppot2=0;}	
-	PTmec2= Tmec(Ppot2,acumVeloc2);
-	acel2 = aceleracion(PTmec2,PTelec,0,iner, 0);
-	acumVeloc2 = integral1(Pin2,Pout2);
-	Pin2 = acel2;
-	Pout2 = acumVeloc2;
-	Vout2= tension(Ri,Kb, 0,acumVeloc2);
+	//printf("\n %f",Planda);
+	//printf("\n %f",Plandai);
+	//printf("\n %f",Pcp);
 	
-	//2
-	Planda3=landa(acumVeloc3,2,radio);
-	Plandai3=landai(Planda3,beta);
-	Pcp3=cp(beta,Planda3,Plandai3);		
-	Ppot3=potencia(Pcp3,radio,2);
-	if (Ppot3>5000){Ppot3=5000;}
-	if (Ppot3<0){Ppot3=0;}	
-	PTmec3= Tmec(Ppot3,acumVeloc3);
-	acel3 = aceleracion(PTmec3,PTelec,0,iner, 0);
-	acumVeloc3 = integral1(Pin3,Pout3);
-	Pin3 = acel3;
-	Pout3 = acumVeloc3;
-	Vout3= tension(Ri,Kb, 0,acumVeloc3);
-	
-	//2.5
-	Planda4=landa(acumVeloc4,2.5,radio);
-	Plandai4=landai(Planda4,beta);
-	Pcp4=cp(beta,Planda4,Plandai4);		
-	Ppot4=potencia(Pcp4,radio,2.5);
-	if (Ppot4>5000){Ppot4=5000;}
-	if (Ppot4<0){Ppot4=0;}	
-	PTmec4= Tmec(Ppot4,acumVeloc4);
-	acel4 = aceleracion(PTmec4,PTelec,0,iner, 0);
-	acumVeloc4 = integral1(Pin4,Pout4);
-	Pin4 = acel4;
-	Pout4 = acumVeloc4;
-	Vout4= tension(Ri,Kb, 0,acumVeloc4);
-	
-	//2.8
-	Planda5=landa(acumVeloc5,2.8,radio);
-	Plandai5=landai(Planda5,beta);
-	Pcp5=cp(beta,Planda5,Plandai5);		
-	Ppot5=potencia(Pcp5,radio,2.8);
-	if (Ppot5>5000){Ppot5=5000;}
-	if (Ppot5<0){Ppot5=0;}	
-	PTmec5= Tmec(Ppot5,acumVeloc5);
-	acel5 = aceleracion(PTmec5,PTelec,0,iner, 0);
-	acumVeloc5 = integral1(Pin5,Pout5);
-	Pin5 = acel5;
-	Pout5 = acumVeloc5;
-	Vout5= tension(Ri,Kb, 0,acumVeloc5);
 	
 	
 	//Par electrico
@@ -505,13 +441,12 @@ void out(){
 	PTelec= Telec(Kp,Iout);//No olvidar el signo
 } else {PTelec= 0;}//Solo funciona para las pruebas
 	
-	
-	//printf("\n %f",Ppot);
-	//printf("\n %f",PTmec);
-	//printf("\n %f",PTelec);
+	if (PTelec<0){PTelec=0;}
 	
 	//CONVERSOR DC-DC
 	DcVo = DcVoSup + 0.001;
+	if (DcVo>400) {DcVo=400;}
+	if (DcVo<0) {DcVo=0;}
 	Duty=(Vout/SalidaVDCDeseada);
 	if (Duty>0.9){Duty=0.9;}
 	DCDiv = Vout/(Duty);
@@ -551,7 +486,7 @@ void out(){
 	Iout=Pot3Phase/(DcVo);//Pot3Phase/DcVo;
 	if (Iout>15){Iout=15;}
 	if (Iout<0){Iout=0;}
-	if (acumVeloc<0){Iout=0;}
+	//if (acumVeloc<0){Iout=0;}
 	
 	
 	
@@ -657,6 +592,7 @@ void out(){
 	//Potencia trifasica
 	Pot3Phase = (InversorA*IoutInversorA+InversorB*IoutInversorB+InversorC*IoutInversorC);
 	if (Pot3Phase>4000) {Pot3Phase=4000;}
+	if (Pot3Phase<0) {Pot3Phase=0;}
 	
 	
 	//Comuniacion Serial-- envio datos arduino
@@ -681,17 +617,17 @@ void out(){
 	//printf("\n LANDA: %f",PTmec1);
 	//printf("\n LANDAI: %f",Ppot1);
 	//printf("\n CP : %f",acumVeloc1);
-	printf("\n POTENCIA: %f",Ppot);
-	printf("\n PARE: %f",PTelec);
-	printf("\n PARM: %f",PTmec);
+	//printf("\n POTENCIA: %f",Ppot);
+	//printf("\n PARE: %f",PTelec);
+	//printf("\n PARM: %f",PTmec);
 	//printf("\n ACEL: %f",acel);
 	printf("\n VANGULAR: %f",acumVeloc);
-	printf("\n TENSION: %f",Vout);
+	//printf("\n TENSION: %f",Vout);
 	printf("\n CORRIENTE: %f",Iout);//Corriente Dc
 	//printf("\n VoContrEntrada: %f",VoContrEntrada);
 	//printf("\n CONVERSORSUP: %f",DcVoSup);
 	//printf("\n CONVERSORINF: %f",DcVoInf);
-	printf("\n CONVERSOR: %f",DcVo);
+	//printf("\n CONVERSOR: %f",DcVo);
 	//printf("\n SUMVD: %f",SumaVD);
 	//printf("\n SUMVD: %f",SumaVQ);
 	//printf("\n ContrVod: %f",ContrVod);
@@ -715,12 +651,12 @@ void out(){
 	//printf("\n IoutInversorA: %f",IoutInversorA);
 	//printf("\n IoutInversorB: %f",IoutInversorB);
 	//printf("\n IoutInversorC: %f",IoutInversorC);
-	//printf("\n Vod: %f",Vod);
+	printf("\n Vod: %f",Vod);
 	//printf("\n Voq: %f",Voq);
 	//printf("\n VoRef: %f",VoRef);
 	//printf("\n Iinvd: %f",Iinvd);
 	//printf("\n Iinvq: %f",Iinvq);
-	//printf("\n Pot3Phase: %f",Pot3Phase);
+	printf("\n Pot3Phase: %f",Pot3Phase);
 	printf("\n ConT: %f",ConT);
 	//printf("\n ConT2: %f",ConT2);
     printf("\n ------------------------");
@@ -736,7 +672,7 @@ void out(){
 	strcat(text3,"\t");
 	sprintf(text4,"%5.4f",Iout);
 	strcat(text4,"\t");
-	sprintf(text5,"%5.4f",PTmec4);
+	sprintf(text5,"%5.4f",DcVo);
 	strcat(text5,"\t");
 	sprintf(text6,"%5.4f",PTmec5);
 	strcat(text6,"\t");
@@ -746,27 +682,27 @@ void out(){
 	strcat(text8,"\t");
 	sprintf(text9,"%5.4f",acumVeloc2);
 	strcat(text9,"\t");
-	sprintf(text10,"%5.4f",acumVeloc3);
+	sprintf(text10,"%5.4f",Pcp);
 	strcat(text10,"\t");
-	sprintf(text11,"%5.4f",acumVeloc4);
+	sprintf(text11,"%5.4f",Md);
 	strcat(text11,"\t");
-	sprintf(text12,"%5.4f",acumVeloc5);
+	sprintf(text12,"%5.4f",Mq);
 	strcat(text12,"\t");
-	sprintf(text13,"%5.4f",Ppot);
+	sprintf(text13,"%5.4f",InversorA);
 	strcat(text13,"\t");
-	sprintf(text14,"%5.4f",Ppot1);
+	sprintf(text14,"%5.4f",Vout);
 	strcat(text14,"\t");
-	sprintf(text15,"%5.4f",Ppot2);
+	sprintf(text15,"%5.4f",Vod);
 	strcat(text15,"\t");
-	sprintf(text16,"%5.4f",Ppot3);
+	sprintf(text16,"%5.4f",Voq);
 	strcat(text16,"\t");
-	sprintf(text17,"%5.4f",Ppot4);
+	sprintf(text17,"%5.4f",Iinvd);
 	strcat(text17,"\t");
-	sprintf(text18,"%5.4f",Ppot5);
+	sprintf(text18,"%5.4f",Iinvq);
 	strcat(text18,"\t");
-	sprintf(text19,"%5.4f",PTelec);
+	sprintf(text19,"%5.4f",Pot3Phase);
 	strcat(text19,"\t");
-	sprintf(text20,"%5.4f",DcVo);
+	sprintf(text20,"%5.4f",IoutInversorA);
 	strcat(text20,"\t");
 	//sprintf(text21,"%5.4f",IoutInversorA);
 	//strcat(text21,"\t");
@@ -891,8 +827,8 @@ int main(int argc,char** argv) {
 	fseek(fp, fsize-5, SEEK_SET);//Setea el puntero en la posicion de los ultimos datos
 	fscanf(fp,"%i,%i",&aaa,&bbb);//Asigna a las variables los valores
 	fclose(fp);
-	//vrio=((double)aaa)/10.0;
-	//Rcarga=(double)bbb;
+	vrio=((double)aaa)/10.0;
+	Rcarga=(double)bbb;
 	
 	//Evita valores indeseados
 	//if (vrio<1){vrio=1;}	
@@ -904,8 +840,10 @@ int main(int argc,char** argv) {
 	fichero =fopen("graficoH.txt","a");
 	out();
 	fclose(fichero);
-	Rcarga=Rcarga-0.0035;
-	if (ConT>1){exit(-1);}
+	//Rcarga=Rcarga-0.0035;
+	//vrio=vrio-0.0002;
+	//if (ConT>1){exit(-1);}
+	//if (ConT>0.5){Rcarga=30;}
 	
 	
 	/* calculate next shot */
