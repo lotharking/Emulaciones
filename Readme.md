@@ -1,0 +1,4 @@
+# Emulations
+The following project was an approach to modeling aimed at implementing control systems for various power generation systems. It was presented as part of an undergraduate thesis, which was itself a component of a project to create a microgrid using `renewable energies`. Please note that the information presented here is only an approximation, and for more detailed information, you should refer to the [thesis itself](http://red.uao.edu.co//handle/10614/12609).
+
+**Note**: Please be aware that the comments in the code are currently in Spanish because that was the original language used during the development of the project and the referenced thesis. However, future updates aim to improve consistency for better readability.
